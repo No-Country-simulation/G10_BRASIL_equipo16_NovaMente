@@ -35,8 +35,15 @@ Outros formatos contemplados pelo produto, como tutoriais e resumos, fazem parte
 
 ---
 
-## Roteiro de Desenvolvimento Planejado
+### Arquitetura da solucao:
+![componentes](/out/docs/diagrams/diagrama_componentes/diagrama_componentes.png)
 
+### Sequencia de interacoes:
+![sequencia](/out/docs/diagrams/diagrama_sequencia/diagrama_sequencia.png)
+
+---
+
+## Roteiro de Desenvolvimento Planejado
 ```
 [Etapa 1: Ingestão & RAG] ➔ [Etapa 2: Agentes & Prompts] ➔ [Etapa 3: Backend & Schema JSON]
                                                                       │
