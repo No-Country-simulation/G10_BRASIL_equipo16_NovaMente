@@ -1,0 +1,39 @@
+' Diagrama de Componentes (Arquitetura do Sistema)
+' Este diagrama mostra as camadas da sua aplicação, desde a interface do usuário até a integração com a Oracle Cloud Infrastructure (OCI).
+
+@startuml
+skinparam style strictuml
+skinparam DefaultTextAlignment center
+
+actor "Usuário" as user
+
+package "Camada de Interface" {
+    [Streamlit / Gradio UI] as ui
+}
+
+package "Camada de Aplicação & Lógica (Backend)" {
+    [API / Orquestrador] as backend
+    [Módulo de Ingestão & Chunking] as ingestion
+    [Pipeline RAG & Vector Store\n(Chroma/FAISS)] as rag
+    [Orquestrador de Agentes\n(LangChain / LangGraph)] as agents
+}
+
+package "Camada de Infraestrutura (OCI Always Free)" {
+    database "OCI Object Storage\n(Documentos & JSONs)" as oci
+}
+
+cloud "LLM Externas / Locais\n(Gemini, OpenAI, Claude, Ollama)" as llm
+
+user --> ui : Upload & Parâmetros
+ui --> backend : Envia requisição
+backend --> ingestion : Processa PDF/Markdown
+ingestion --> rag : Gera Embeddings & Chunks
+backend --> oci : Salva / Carrega Arquivos Originais
+backend --> agents : Aciona Fluxo de Agentes
+agents --> rag : Busca Contexto Relevante
+agents --> llm : Consultas & Prompting
+agents --> backend : Retorna Conteúdo Estruturado (JSON)
+backend --> oci : Salva JSON de Saída
+backend --> ui : Exibe Resultados / Download
+
+@enduml

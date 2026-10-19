@@ -1,0 +1,45 @@
+' Diagrama de Sequência (Fluxo de Processamento RAG e Geração)
+' Este diagrama detalha o passo a passo desde o momento em que o usuário envia o documento até a entrega do conteúdo educacional personalizado.
+
+@startuml
+skinparam style strictuml
+
+autonumber
+
+actor Usuário as user
+participant "Interface\n(Streamlit/Gradio)" as ui
+participant "Backend / Orquestrador" as backend
+database "OCI Object Storage" as oci
+participant "Pipeline RAG\n(Vector Store)" as rag
+participant "Agentes de IA\n(LLM)" as agents
+
+user -> ui: Envia documento e define parâmetros\n(Perfil, Formato, Nicho)
+ui -> backend: Processa requisição (arquivo + config)
+
+group Persistência Inicial
+    backend -> oci: Upload do documento original
+    oci --> backend: Confirmação de salvamento
+end
+
+group Ingestão e Indexação
+    backend -> rag: Realiza chunking e gera embeddings
+    rag --> backend: Vetores indexados com sucesso
+end
+
+group Execução do RAG e Agentes
+    backend -> rag: Busca semântica (Contexto relevante)
+    rag --> backend: Retorna trechos da documentação
+    
+    backend -> agents: Executa cadeia (LangChain/LangGraph)\ncom prompt estruturado (Few-Shot/Role)
+    agents -> agents: Verifica fidelidade e mitiga alucinações
+    agents --> backend: Retorna JSON estruturado\n(Conteúdo + Metadados Pedagógicos)
+end
+
+group Persistência Final
+    backend -> oci: Salva pacote JSON gerado
+    oci --> backend: Confirmação
+end
+
+backend --> ui: Retorna dados estruturados para exibição
+ui --> user: Apresenta tutoriais, quizzes,\nflashcards ou resumos
+@enduml
