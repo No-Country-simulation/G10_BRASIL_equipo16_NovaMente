@@ -1,0 +1,5 @@
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 150
+
+if CHUNK_SIZE <= CHUNK_OVERLAP:
+    raise ValueError("CHUNK_SIZE deve ser maior que CHUNK_OVERLAP")
