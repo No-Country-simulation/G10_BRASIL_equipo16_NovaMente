@@ -7,16 +7,18 @@ def reader(file : Path)->list:
     extensao = file.suffix.lower()
     
     if extensao not in extensoes:
-        return []
+        raise ValueError(f"Extensão {extensao} é inválida")
         
     if not file.exists():
-        return []
+        raise FileNotFoundError(f"Arquivo {file} inexistente")
         
-    if extensao==".pdf":
-        leitor =  PyMuPDFLoader(str(file))
+    try:
+        if extensao==".pdf":
+            leitor =  PyMuPDFLoader(str(file)) 
+        else :
+            leitor =  TextLoader(str(file), encoding="utf-8")     
+        return leitor.load()
+    
+    except Exception as e:
+        raise RuntimeError(f"Falha ao ler o arquivo {file} : {e}") from e
         
-    else :
-        leitor =  TextLoader(str(file), encoding="utf-8")
-    
-    return leitor.load()
-    
