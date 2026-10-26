@@ -27,6 +27,7 @@ def chunker(docs: List[Document]) -> List[Document]:
             page = 0
             chunk.metadata["page"] = page
         chunk.metadata["chunk_index"]= i
-        chunk.metadata["chunk_id"] = f'{source}_p{page}_c{i}'        
+        chunk.metadata["chunk_id"] = f'{source}_p{page}_c{i}' 
+    return chunks      
         
         
