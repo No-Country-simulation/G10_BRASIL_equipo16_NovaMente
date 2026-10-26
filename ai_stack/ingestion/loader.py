@@ -13,17 +13,15 @@ def reader(file: Path) ->List[Document]:
     if extensao not in [".pdf",".txt",".md"]:
         raise ValueError(f"Extensão {extensao} é inválida")
            
-    try:
-        if extensao == ".pdf":
+    
+    if extensao == ".pdf":
             leitor = PyMuPDFLoader(str(file))
-        else:
+    else:
             leitor = TextLoader(str(file), encoding="utf-8")
-             
-        docs = leitor.load()
-        for doc in docs:
-            doc.metadata["source"] = file.name
-            if doc.metadata.get("page", None) is None:
-                doc.metadata["page"] =0
-        return docs                 
-    except Exception as e:
-        raise RuntimeError(f"Falha ao ler {file}: {e}") from e
+    docs = leitor.load()
+    for doc in docs:
+        doc.metadata["source"] = file.name
+        if doc.metadata.get("page", None) is None:
+             doc.metadata["page"] =0
+    return docs                 
+    
