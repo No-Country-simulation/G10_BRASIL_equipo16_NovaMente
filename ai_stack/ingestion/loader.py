@@ -1,10 +1,14 @@
+from typing import List
+from langchain_core.documents import Document
+
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader
 from pathlib import Path
 
-def reader(file: Path) -> list:
+def reader(file: Path) ->List[Document]:
     if not file.exists():
         raise FileNotFoundError(f"Arquivo {file} inexistente")
-        
+    if not file.is_file():
+        raise ValueError(f"O caminho {file} não aponta para um arquivo válido")
     extensao = file.suffix.lower()
     if extensao not in [".pdf",".txt",".md"]:
         raise ValueError(f"Extensão {extensao} é inválida")
@@ -18,7 +22,8 @@ def reader(file: Path) -> list:
         docs = leitor.load()
         for doc in docs:
             doc.metadata["source"] = file.name
-            doc.metadata["page"] = doc.metadata.get("page", 0)
+            if doc.metadata.get("page", None) is None:
+                doc.metadata["page"] =0
         return docs                 
     except Exception as e:
         raise RuntimeError(f"Falha ao ler {file}: {e}") from e
