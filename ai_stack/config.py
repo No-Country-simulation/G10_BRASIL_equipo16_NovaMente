@@ -5,7 +5,7 @@ CHUNK_OVERLAP = 150
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # FONTE versionada do time
-RAG_SOURCE_PATH = Path("docs/rag/base-de-conhecimento")
+RAG_SOURCE_PATH = Path("docs/")
 # BANCO gerado local
 CHROMA_DB_PATH = "./data/chroma_db"
 

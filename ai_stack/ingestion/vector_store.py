@@ -35,7 +35,9 @@ def create_vector_db(chunks: list[Document], embedding_model: HuggingFaceEmbeddi
         raise ValueError("embedding_model não pode estar vazio")
     chunks_ids= validar_chunks_ids(chunks)
     db_vector= Chroma( embedding_function=embedding_model, persist_directory=CHROMA_DB_PATH)
-    ids_existentes=set(db_vector.get()['ids'])
+    # Obtém o dicionário de dados da BD; se 'ids' não existir, devolve uma lista vazia por defeito
+    dados_atuais = db_vector.get()
+    ids_existentes = set(dados_atuais.get("ids", [])) if dados_atuais else set()
 
     chunks_ids_novos = chunks_ids-ids_existentes
     novo_chunks= [chunk for chunk in chunks if chunk.metadata.get("chunk_id")in chunks_ids_novos]
