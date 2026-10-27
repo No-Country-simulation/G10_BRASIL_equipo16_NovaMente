@@ -2,7 +2,7 @@ from ai_stack.ingestion.loader import reader
 from ai_stack.ingestion.chunking import chunker
 from ai_stack.ingestion.vector_store import create_vector_db
 from ai_stack.ingestion.embeddings import get_embeddings_model
-
+from ai_stack.rag_pipeline import generate_rag_response
 from pathlib import Path
 from ai_stack.config import RAG_SOURCE_PATH
 from ai_stack.retrieval import retrieve_context_from_db
@@ -31,8 +31,10 @@ def main():
     chunks = chunker(documentos)
     embedding_model = get_embeddings_model()
     db_vector = create_vector_db(chunks, embedding_model)
-
-    resultados = retrieve_context_from_db(db_vector, "o que e fotossintese?", k=3)
+    resposta = generate_rag_response("o que e Power Query??", db_vector)
+    print("Resposta gerada:")
+    print(resposta["answer"])
+    resultados = retrieve_context_from_db(db_vector, "o que e Power Query??", k=3)
     print("Resultados da pesquisa:")
     for i, doc in enumerate(resultados):
         print(f"Resultado {i + 1}:")
