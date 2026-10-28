@@ -25,21 +25,21 @@ def main():
             raise ValueError(f"Extensão {file.suffix} é inválida para o ficheiro {file}")
 
     documentos = []
+
     for file in ficheiros:
         docs = reader(file)
         documentos.extend(docs)
+
     chunks = chunker(documentos)
     embedding_model = get_embeddings_model()
     db_vector = create_vector_db(chunks, embedding_model)
-    resposta = generate_rag_response("o que e Power Query??", db_vector)
+
+    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario")
+    
     print("Resposta gerada:")
     print(resposta["answer"])
-    resultados = retrieve_context_from_db(db_vector, "o que e Power Query??", k=3)
-    print("Resultados da pesquisa:")
-    for i, doc in enumerate(resultados):
-        print(f"Resultado {i + 1}:")
-        print(f"Conteúdo: {doc.page_content}")
-        print(f"Metadados: {doc.metadata}")
-        print("-" * 40)
+    
+    
+    
 if __name__ == "__main__":
     main()
