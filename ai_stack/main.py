@@ -34,7 +34,7 @@ def main():
     embedding_model = get_embeddings_model()
     db_vector = create_vector_db(chunks, embedding_model)
 
-    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario")
+    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario","tutorial")
     
     print("Resposta gerada:")
     print(resposta["answer"])

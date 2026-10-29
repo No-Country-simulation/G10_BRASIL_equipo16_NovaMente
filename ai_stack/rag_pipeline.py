@@ -1,11 +1,13 @@
-from langchain_core.prompts import ChatPromptTemplate
+from ai_stack.prompts import prompt
 
 from langchain_core.messages import convert_to_openai_messages
 from ai_stack.retrieval import retrieve_context_from_db
 from ai_stack.llm import generate_completion
+from ai_stack.schemas import Formats
 
 def validar_nivel(nivel):
-        
+
+
         if not isinstance(nivel,str) :
             nivel="iniciante"
 
@@ -13,12 +15,24 @@ def validar_nivel(nivel):
 
         if nivel not in ["iniciante","intermediario"]:
                  nivel="iniciante"
-                 
-        return nivel
-        
-def generate_rag_response(pergunta, db_vector, nivel):
-      nivel_valido= validar_nivel(nivel)
 
+        return nivel
+
+def validar_formato(formato):
+    if not isinstance(formato,str):
+            raise TypeError("Tipo invalido")
+
+    formato= formato.strip().lower()
+
+    formato_convertido= Formats(formato)
+    return formato_convertido
+
+
+
+
+def generate_rag_response(pergunta, db_vector, nivel, formato):
+      nivel_valido= validar_nivel(nivel)
+      formato_valido = validar_formato(formato)
       documentos = retrieve_context_from_db( db_vector,pergunta, k=3)
 
       if not documentos:
@@ -32,25 +46,18 @@ def generate_rag_response(pergunta, db_vector, nivel):
                  "page": doc.metadata.get("page", "Desconhecido")
                } for doc in documentos]
 
-   
 
-      prompt = ChatPromptTemplate.from_messages([
-       ("system", """És o assistente educativo do NovaMente.
-Responde em português. Fundamenta as respostas no contexto fornecido e de acordo com o nível do usuário.
-Se for iniciante busque por Linguagem simples, conceitos definidos antes de serem utilizados, exemplos concretos e poucos termos técnicos sem explicação.
-Se for intermediário use Terminologia técnica adequada, funcionamento interno, relações entre conceitos e exemplos mais próximos da prática.
-Se a informação for insuficiente, admite-o.
-Não inventes factos nem fontes."""),
-    ("user", "Contexto:\n{context}\n\nPergunta: {question} \n\nNível do usuário : {nivel_valido}")
-])
+
+
       prompt_value = prompt.invoke({
     "context": contexto,
     "question": pergunta,
-    "nivel_valido": nivel_valido
+    "nivel_valido": nivel_valido,
+    "formato_valido":formato_valido.value
 })
       messages = convert_to_openai_messages(prompt_value.to_messages())
       resposta = generate_completion(messages)
-    
+
       return {
         "answer": resposta,
         "sources": metadados
