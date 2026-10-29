@@ -1,9 +1,10 @@
 from ai_stack.prompts import prompt
-
+import json
+from pydantic import ValidationError
 from langchain_core.messages import convert_to_openai_messages
 from ai_stack.retrieval import retrieve_context_from_db
 from ai_stack.llm import generate_completion
-from ai_stack.schemas import Formats
+from ai_stack.schemas import Formats,EducationalPackage
 
 def validar_nivel(nivel):
 
@@ -56,9 +57,17 @@ def generate_rag_response(pergunta, db_vector, nivel, formato):
     "formato_valido":formato_valido.value
 })
       messages = convert_to_openai_messages(prompt_value.to_messages())
-      resposta = generate_completion(messages)
+      resposta= generate_completion(messages)
+      if resposta is None or resposta.strip()=="":
+        raise ValueError("resposta de llm vazia ")
+      try:
+           dados_json= json.loads(resposta) 
+      except json.JSONDecodeError as e:
+            raise ValueError(f"{e}")from e
+      modelo_validado=EducationalPackage.model_validate(dados_json)
+      resposta_estruturada = modelo_validado.model_dump(mode="json")
 
       return {
-        "answer": resposta,
+        "answer": resposta_estruturada ,
         "sources": metadados
     }

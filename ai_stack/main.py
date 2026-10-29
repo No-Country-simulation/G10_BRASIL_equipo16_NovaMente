@@ -34,10 +34,13 @@ def main():
     embedding_model = get_embeddings_model()
     db_vector = create_vector_db(chunks, embedding_model)
 
-    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario","tutorial")
+    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario","flashcards")
     
     print("Resposta gerada:")
     print(resposta["answer"])
+    print("=="*40)
+    print("Fonte dos dados:")
+    print(resposta["sources"])
     
     
     
