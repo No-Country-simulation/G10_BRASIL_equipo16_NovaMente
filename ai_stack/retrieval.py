@@ -3,7 +3,7 @@ from langchain_core.documents import Document
 
 def retrieve_context_from_db(db_vector, pergunta: str, k: int=3)-> list[Document]:
     if db_vector is None:
-        raise ValueError("db_vector não pode estar vazio")
+        raise ValueError("db_vector não pode ser None")
 
     if not isinstance(pergunta, str):
         raise TypeError("Pergunta deve ser string")
