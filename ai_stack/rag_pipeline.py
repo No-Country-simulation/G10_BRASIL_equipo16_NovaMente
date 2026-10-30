@@ -1,6 +1,6 @@
 from ai_stack.prompts import prompt
 import json
-from pydantic import ValidationError
+
 from langchain_core.messages import convert_to_openai_messages
 from ai_stack.retrieval import retrieve_context_from_db
 from ai_stack.llm import generate_completion
@@ -37,10 +37,12 @@ def generate_rag_response(pergunta, db_vector, nivel, formato):
       documentos = retrieve_context_from_db( db_vector,pergunta, k=3)
 
       if not documentos:
-            return {
-            "answer": "Desculpe, não consegui encontrar informações relevantes para responder à sua pergunta.",
-            "sources": []
-        }
+           return {
+        "status": "insufficient_context",
+        "answer": None,
+        "sources": [],
+        "message": "Não foram encontrados documentos relevantes."
+    }
       contexto= "\n\n".join([  f"Fonte: {doc.metadata.get('source', 'Desconhecido')}\n Contexto: {doc.page_content}\n Página: {doc.metadata.get('page', 'Desconhecido')}"
                              for doc in documentos])
       metadados= [{"source": doc.metadata.get("source", "Desconhecido"),
@@ -68,6 +70,8 @@ def generate_rag_response(pergunta, db_vector, nivel, formato):
       resposta_estruturada = modelo_validado.model_dump(mode="json")
 
       return {
-        "answer": resposta_estruturada ,
-        "sources": metadados
-    }
+    "status": "success",
+    "answer": resposta_estruturada,
+    "sources": metadados,
+    "message": None
+}

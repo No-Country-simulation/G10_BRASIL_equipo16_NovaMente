@@ -2,7 +2,7 @@ import ai_stack.rag_pipeline as pipeline
 from langchain_core.documents import Document
 from pydantic import ValidationError
 import pytest
-
+from unittest.mock import Mock
 def test_flashcards_validos(monkeypatch):
     doc =Document(
     page_content="O Power Query permite transformar dados.",
@@ -137,6 +137,7 @@ def test_estrutura_invalida(monkeypatch):
         )
 
 def test_tutorial_valido(monkeypatch):
+
     doc =Document(
         page_content="O Power Query permite transformar dados.",
         metadata={"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0}
@@ -201,3 +202,42 @@ def test_tutorial_valido(monkeypatch):
     assert len(resultado["answer"]["content"]["steps"]) > 0
     
     assert resultado["sources"][0]["source"] == doc.metadata["source"]
+
+
+def test_sem_contexto( monkeypatch):
+    monkeypatch.setattr(
+    pipeline,
+    "retrieve_context_from_db",
+    lambda *args, **kwargs: []
+)
+
+    llm_mock = Mock()
+
+    monkeypatch.setattr(
+    pipeline,
+    "generate_completion",
+    llm_mock
+)   
+    
+    resultado = pipeline.generate_rag_response(
+             "Power Query",
+             None,
+             "intermediario",
+             "tutorial"
+         )
+    assert resultado["status"]== "insufficient_context"
+
+
+
+    assert resultado["answer"] is None
+
+
+
+    assert resultado["sources"] == []
+    assert resultado["message"] == "Não foram encontrados documentos relevantes."
+
+
+
+    llm_mock.assert_not_called()
+
+    
