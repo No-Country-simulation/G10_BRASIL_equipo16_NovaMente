@@ -48,3 +48,35 @@ class EducationalPackage(BaseModel):
                 return self
         else:
              raise ValueError("O formato declarado nos metadados não corresponde ao tipo de conteúdo fornecido.")
+
+
+
+        
+class QuizOption(BaseModel):
+     option_id: str  = Field(min_length=1, max_length=16)
+     text : str
+
+
+class QuizQuestion(BaseModel):
+     question_id: str = Field(min_length=1, max_length=64)
+     question : str
+     options: list[QuizOption] = Field(min_length= 2)
+     correct_option_id: str = Field(min_length=1, max_length=16)
+     justification : str
+
+     @model_validator(mode='after')
+     def validar_resposta(self):
+          ids = [option.option_id for option in self.options]
+          ids_unicos = set(ids)
+          if len(ids)!=len(ids_unicos):
+               raise ValueError("Existem ids de opções duplicados")
+          if self.correct_option_id not in ids :
+               raise ValueError("A resposta correta não corresponde a nenhuma opção.")
+          return self
+
+
+          
+class QuizContent(BaseModel):
+     title : str
+     questions : list[QuizQuestion] = Field(min_length= 4, max_length=4)
+     
