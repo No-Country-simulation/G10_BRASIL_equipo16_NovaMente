@@ -45,7 +45,7 @@ class FlashcardContent(NovaMenteBaseModel):
     cards: list[FlashCard] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def validar_cards(self):
+    def validate_cards(self):
         ids = [card.card_id for card in self.cards]
         ids_unicos = set(ids)
 
@@ -68,7 +68,7 @@ class QuizQuestion(NovaMenteBaseModel):
      justification :str = Field(  min_length=1)
 
      @model_validator(mode='after')
-     def validar_resposta(self):
+     def validate_question(self):
            
           ids = [option.option_id for option in self.options]
           ids_unicos = set(ids)
@@ -86,13 +86,62 @@ class QuizContent(NovaMenteBaseModel):
 
      questions : list[QuizQuestion] = Field(min_length= 1)
      @model_validator(mode="after")
-     def validar_perguntas(self):
+     def validate_questions(self):
           ids = [question.question_id for question in self.questions]
           ids_unicos = set(ids)
           if len(ids)!= len (ids_unicos):
                raise ValueError("Existem ids  duplicados de perguntas")
           return self
-               
+
+
+class ReviewCategory(str, Enum):
+    source_fidelity = "source_fidelity"
+    technical_accuracy = "technical_accuracy"
+    ambiguity = "ambiguity"
+    pedagogical_quality = "pedagogical_quality"
+
+
+class ReviewStatus(str, Enum):
+    approved = "approved"
+    correction_required = "correction_required"
+
+
+class ReviewIssue(NovaMenteBaseModel):
+    item_id: str = Field(min_length=1, max_length=64)
+
+    item_type: Literal["question", "flashcard"]
+
+    category: ReviewCategory
+
+    description: str = Field(min_length=1)
+
+    evidence: str = Field(min_length=1)
+
+    suggestion: str = Field(min_length=1)
+
+
+class ReviewReport(NovaMenteBaseModel):
+    status: ReviewStatus
+
+    summary: str = Field(min_length=1)
+
+    issues: list[ReviewIssue]
+
+    @model_validator(mode="after")
+    def validate_review_status(self):
+
+        if self.status == ReviewStatus.approved and self.issues:
+            raise ValueError(
+                "Um relatório aprovado não pode conter problemas."
+            )
+
+        if self.status == ReviewStatus.correction_required and not self.issues:
+            raise ValueError(
+                "Um relatório que necessita de correção deve conter pelo menos um problema."
+            )
+
+        return self
+              
      
 
 class EducationalPackage(NovaMenteBaseModel):
@@ -100,7 +149,7 @@ class EducationalPackage(NovaMenteBaseModel):
     content : TutorialContent | FlashcardContent | QuizContent
 
     @model_validator(mode='after')
-    def validacao(self):
+    def validation(self):
         if self.metadata.format_generated==Formats.tutorial and isinstance(self.content,TutorialContent):
                 return self
         elif self.metadata.format_generated==Formats.flashcards and isinstance(self.content,FlashcardContent):
