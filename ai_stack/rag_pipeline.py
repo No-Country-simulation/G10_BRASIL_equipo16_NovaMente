@@ -2,6 +2,7 @@ from ai_stack.prompts import prompt
 import json
 
 from langchain_core.messages import convert_to_openai_messages
+from ai_stack.agents.reviewer import review_educational_content
 from ai_stack.retrieval import retrieve_context_from_db
 from ai_stack.llm import generate_completion
 from ai_stack.schemas import Formats,EducationalPackage
@@ -69,9 +70,27 @@ def generate_rag_response(pergunta, db_vector, nivel, formato):
       modelo_validado=EducationalPackage.model_validate(dados_json)
       resposta_estruturada = modelo_validado.model_dump(mode="json")
 
+      relatorio_revisao = None
+
+      if formato_valido in (Formats.quiz, Formats.flashcards):
+        relatorio_revisao = review_educational_content(
+          context=contexto,
+          educational_package=resposta_estruturada,
+          profile=nivel_valido,
+          educational_format=formato_valido.value
+      )
+
+
+      review_report_data = (
+    relatorio_revisao.model_dump(mode="json")
+    if relatorio_revisao is not None
+    else None
+)
       return {
     "status": "success",
     "answer": resposta_estruturada,
     "sources": metadados,
-    "message": None
+    "message": None,
+      "review_report": review_report_data
+
 }
