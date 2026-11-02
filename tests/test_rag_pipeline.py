@@ -25,7 +25,7 @@ def test_flashcards_validos(monkeypatch):
     "content": {
         "title": "Introdução ao Power Query",
         "cards": [
-            {
+            {   "card_id": "card_001",
                 "front": "O que é o Power Query?",
                 "back": "É uma ferramenta para transformar dados."
             }
