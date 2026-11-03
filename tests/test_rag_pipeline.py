@@ -3,6 +3,7 @@ from langchain_core.documents import Document
 from pydantic import ValidationError
 import pytest
 from unittest.mock import Mock
+from ai_stack.schemas import ReviewReport, ReviewStatus
 def test_flashcards_validos(monkeypatch):
     doc =Document(
     page_content="O Power Query permite transformar dados.",
@@ -25,7 +26,7 @@ def test_flashcards_validos(monkeypatch):
     "content": {
         "title": "Introdução ao Power Query",
         "cards": [
-            {
+            {   "card_id": "card_001",
                 "front": "O que é o Power Query?",
                 "back": "É uma ferramenta para transformar dados."
             }
@@ -38,7 +39,26 @@ def test_flashcards_validos(monkeypatch):
     "generate_completion",
     lambda *args, **kwargs: resposta_json
 )
+
+    review_mock = Mock(
+    return_value=ReviewReport(
+    status=ReviewStatus.approved,
+        summary="Conteúdo aprovado.",
+        issues=[]
+    )
+)
+
+    monkeypatch.setattr(
+        pipeline,
+        "review_educational_content",
+        review_mock
+    )
+
     resultado = pipeline.generate_rag_response("Power Query",None,"intermediario","flashcards")
+
+    review_mock.assert_called_once()
+
+    assert resultado["review_report"]["status"] == "approved"
 
     assert "answer" in resultado
     assert "sources" in resultado
@@ -183,14 +203,22 @@ def test_tutorial_valido(monkeypatch):
      "generate_completion",
      lambda *args, **kwargs: resposta_json
      )
-    
-    
+    review_mock = Mock()
+
+    monkeypatch.setattr(
+        pipeline,
+        "review_educational_content",
+        review_mock
+    )
+
     resultado = pipeline.generate_rag_response(
          "Power Query",
          None,
          "intermediario",
          "tutorial"
      )
+
+    review_mock.assert_not_called()
     
     assert "answer" in resultado
     assert "sources" in resultado
@@ -240,4 +268,85 @@ def test_sem_contexto( monkeypatch):
 
     llm_mock.assert_not_called()
 
-    
+def test_quiz_valido(monkeypatch):
+
+    doc = Document(
+        page_content="Query Folding traduz os passos do Power Query para a linguagem da fonte, como SQL.",
+        metadata={"source": "manual-power-bi.pdf", "page": 3}
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "retrieve_context_from_db",
+        lambda *args, **kwargs: [doc]
+    )
+
+    resposta_json = """
+    {
+        "metadata": {
+            "profile_applied": "intermediario",
+            "format_generated": "quiz",
+            "key_concepts": ["Query Folding", "Power Query"],
+            "study_time_minutes": 5,
+            "prerequisites": []
+        },
+        "content": {
+            "title": "Quiz sobre Query Folding",
+            "questions": [
+                {
+                    "question_id": "q_001",
+                    "question": "O que é Query Folding?",
+                    "options": [
+                        {
+                            "option_id": "A",
+                            "text": "Traduzir passos de transformação para a linguagem da fonte."
+                        },
+                        {
+                            "option_id": "B",
+                            "text": "Armazenar dados permanentemente em memória."
+                        }
+                    ],
+                    "correct_option_id": "A",
+                    "justification": "O contexto explica que os passos são traduzidos para a linguagem da fonte."
+                }
+            ]
+        }
+    }
+    """
+
+    monkeypatch.setattr(
+        pipeline,
+        "generate_completion",
+        lambda *args, **kwargs: resposta_json
+    )
+
+    review_mock = Mock(
+        return_value=ReviewReport(
+            status=ReviewStatus.approved,
+            summary="Quiz aprovado.",
+            issues=[]
+        )
+    )
+
+    monkeypatch.setattr(
+        pipeline,
+        "review_educational_content",
+        review_mock
+    )
+
+    resultado = pipeline.generate_rag_response(
+        "O que é Query Folding?",
+        None,
+        "intermediario",
+        "quiz"
+    )
+
+    assert "answer" in resultado
+    assert "review_report" in resultado
+
+    assert resultado["answer"]["metadata"]["format_generated"] == "quiz"
+    assert len(resultado["answer"]["content"]["questions"]) == 1
+
+    assert resultado["review_report"]["status"] == "approved"
+
+    review_mock.assert_called_once()
