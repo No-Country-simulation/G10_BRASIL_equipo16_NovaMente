@@ -5,11 +5,16 @@ from ai_stack.ingestion.embeddings import get_embeddings_model
 from ai_stack.rag_pipeline import generate_rag_response
 from pathlib import Path
 from ai_stack.config import RAG_SOURCE_PATH
-from ai_stack.retrieval import retrieve_context_from_db
-CAMINHO = Path(RAG_SOURCE_PATH)
-if not CAMINHO:
-    raise ValueError(f"Caminho {RAG_SOURCE_PATH} não é válido")
 
+from ai_stack.ingestion.document_identity import (
+    gerar_document_id_local,
+    calcular_versao_documento
+)
+CAMINHO = Path(RAG_SOURCE_PATH)
+if not CAMINHO.exists() or not CAMINHO.is_dir():
+    raise NotADirectoryError(
+        f"Diretório inválido: {CAMINHO}"
+    )
 
 def main():
     ficheiros = list(CAMINHO.glob("**/*.txt")) + list(CAMINHO.glob("**/*.pdf")) + list(CAMINHO.glob("**/*.md"))
@@ -27,9 +32,16 @@ def main():
     documentos = []
 
     for file in ficheiros:
-        docs = reader(file)
-        documentos.extend(docs)
+        document_id = gerar_document_id_local(file, CAMINHO)
+        document_version = calcular_versao_documento(file)
 
+        docs = reader(
+        file,
+        document_id,
+        document_version
+        )
+
+        documentos.extend(docs)
     chunks = chunker(documentos)
     embedding_model = get_embeddings_model()
     db_vector = create_vector_db(chunks, embedding_model)
@@ -38,6 +50,13 @@ def main():
     
     print("Resposta gerada:")
     print(resposta["answer"])
+    print("=="*40)
+    dados = db_vector.get(include=["metadatas"])
+
+    print("Total de chunks:", len(dados["ids"]))
+
+    for metadata in dados["metadatas"][:5]:
+        print(metadata)
     print("=="*40)
     print("Fonte dos dados:")
     print(resposta["sources"])
