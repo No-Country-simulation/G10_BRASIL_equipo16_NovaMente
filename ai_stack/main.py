@@ -1,13 +1,13 @@
-from ai_stack.ingestion.loader import reader
-from ai_stack.ingestion.chunking import chunker
-from ai_stack.ingestion.vector_store import create_vector_db
-from ai_stack.ingestion.embeddings import get_embeddings_model
-from ai_stack.rag_pipeline import generate_rag_response
+from ai_stack.ingestion.loader import carregar_documento
+from ai_stack.ingestion.chunking import dividir_documentos_em_blocos
+from ai_stack.ingestion.vector_store import criar_banco_vetorial
+from ai_stack.ingestion.embeddings import obter_modelo_embeddings
+from ai_stack.rag_pipeline import gerar_resposta_rag
 from pathlib import Path
 from ai_stack.config import RAG_SOURCE_PATH
 
 from ai_stack.ingestion.document_identity import (
-    gerar_document_id_local,
+    gerar_identificador_documento_local,
     calcular_versao_documento
 )
 CAMINHO = Path(RAG_SOURCE_PATH)
@@ -32,21 +32,21 @@ def main():
     documentos = []
 
     for file in ficheiros:
-        document_id = gerar_document_id_local(file, CAMINHO)
+        document_id = gerar_identificador_documento_local(file, CAMINHO)
         document_version = calcular_versao_documento(file)
 
-        docs = reader(
+        docs = carregar_documento(
         file,
         document_id,
         document_version
         )
 
         documentos.extend(docs)
-    chunks = chunker(documentos)
-    embedding_model = get_embeddings_model()
-    db_vector = create_vector_db(chunks, embedding_model)
+    chunks = dividir_documentos_em_blocos(documentos)
+    embedding_model = obter_modelo_embeddings()
+    db_vector = criar_banco_vetorial(chunks, embedding_model)
 
-    resposta = generate_rag_response("o que e Power Query??", db_vector, "intermediario","flashcards")
+    resposta = gerar_resposta_rag("o que e Power Query??", db_vector, "intermediario","flashcards")
     
     print("Resposta gerada:")
     print(resposta["answer"])

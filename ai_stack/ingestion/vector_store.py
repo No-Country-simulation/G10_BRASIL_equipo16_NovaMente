@@ -8,24 +8,24 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from ai_stack.config import CHROMA_DB_PATH
 
 
-def validar_chunks_ids(chunks: list[Document]) -> set[str]:
+def validar_ids_dos_blocos(blocos: list[Document]) -> set[str]:
 
-    if not chunks:
-        raise ValueError("A lista de chunks não pode estar vazia")
+    if not blocos:
+        raise ValueError("A lista de blocos não pode estar vazia")
 
-    chunks_ids = []
+    ids_blocos = []
     versoes_por_documento = {}
 
-    for indice, chunk in enumerate(chunks):
+    for indice, bloco in enumerate(blocos):
 
-        if not isinstance(chunk, Document):
+        if not isinstance(bloco, Document):
             raise TypeError(
                 f"O elemento na posição {indice} não é um Document"
             )
 
-        metadata = chunk.metadata
+        metadados = bloco.metadata
 
-        if not isinstance(metadata, dict):
+        if not isinstance(metadados, dict):
             raise TypeError("Os metadados devem ser um dicionário")
 
         for campo in (
@@ -33,7 +33,7 @@ def validar_chunks_ids(chunks: list[Document]) -> set[str]:
             "document_id",
             "document_version"
         ):
-            valor = metadata.get(campo)
+            valor = metadados.get(campo)
 
             if valor is None:
                 raise ValueError(
@@ -55,69 +55,69 @@ def validar_chunks_ids(chunks: list[Document]) -> set[str]:
                     f"{campo} não pode ter espaços nas extremidades"
                 )
 
-        chunk_id = metadata["chunk_id"]
-        document_id = metadata["document_id"]
-        document_version = metadata["document_version"]
+        id_bloco = metadados["chunk_id"]
+        id_documento = metadados["document_id"]
+        versao_documento = metadados["document_version"]
 
         # Um documento não pode ter versões diferentes
         # na mesma operação de ingestão.
-        if document_id in versoes_por_documento:
+        if id_documento in versoes_por_documento:
 
-            if versoes_por_documento[document_id] != document_version:
+            if versoes_por_documento[id_documento] != versao_documento:
                 raise ValueError(
-                    f"Documento {document_id} possui versões diferentes"
+                    f"Documento {id_documento} possui versões diferentes"
                 )
 
         else:
-            versoes_por_documento[document_id] = document_version
+            versoes_por_documento[id_documento] = versao_documento
 
-        chunks_ids.append(chunk_id)
+        ids_blocos.append(id_bloco)
 
     # Impedir IDs duplicados na entrada
-    if len(chunks_ids) != len(set(chunks_ids)):
-        raise ValueError("Existem chunks com IDs duplicados")
+    if len(ids_blocos) != len(set(ids_blocos)):
+        raise ValueError("Existem blocos com IDs duplicados")
 
-    return set(chunks_ids)
+    return set(ids_blocos)
 
 
-def create_vector_db(
-    chunks: list[Document],
-    embedding_model: HuggingFaceEmbeddings
+def criar_banco_vetorial(
+    blocos: list[Document],
+    modelo_embeddings: HuggingFaceEmbeddings
 ) -> Chroma:
 
-    if embedding_model is None:
-        raise ValueError("embedding_model não pode ser None")
+    if modelo_embeddings is None:
+        raise ValueError("O modelo de embeddings não pode ser None")
 
-    validar_chunks_ids(chunks)
+    validar_ids_dos_blocos(blocos)
 
     # Abrir ou criar a base vetorial persistente
-    db_vector = Chroma(
-        embedding_function=embedding_model,
+    banco_vetorial = Chroma(
+        embedding_function=modelo_embeddings,
         persist_directory=CHROMA_DB_PATH
     )
 
-    # Agrupar os chunks por documento
-    chunks_por_documento = defaultdict(list)
+    # Agrupar os blocos por documento
+    blocos_por_documento = defaultdict(list)
 
-    for chunk in chunks:
-        document_id = chunk.metadata["document_id"]
-        chunks_por_documento[document_id].append(chunk)
+    for bloco in blocos:
+        id_documento = bloco.metadata["document_id"]
+        blocos_por_documento[id_documento].append(bloco)
 
     # Processar cada documento individualmente
-    for document_id, docs_documento in chunks_por_documento.items():
+    for id_documento, blocos_documento in blocos_por_documento.items():
 
-        document_version = docs_documento[0].metadata["document_version"]
+        versao_documento = blocos_documento[0].metadata["document_version"]
 
         ids_recebidos = [
-            doc.metadata["chunk_id"]
-            for doc in docs_documento
+            bloco.metadata["chunk_id"]
+            for bloco in blocos_documento
         ]
 
-        ids_recebidos_set = set(ids_recebidos)
+        conjunto_ids_recebidos = set(ids_recebidos)
 
         # Consultar apenas os registos deste documento
-        dados_atuais = db_vector.get(
-            where={"document_id": document_id},
+        dados_atuais = banco_vetorial.get(
+            where={"document_id": id_documento},
             include=["metadatas"]
         )
 
@@ -126,65 +126,68 @@ def create_vector_db(
         metadados_existentes = dados_atuais.get("metadatas") or []
 
         versoes_existentes = {
-            metadata.get("document_version")
-            for metadata in metadados_existentes
-            if isinstance(metadata, dict)
+            metadado.get("document_version")
+            for metadado in metadados_existentes
+            if isinstance(metadado, dict)
         }
 
         # Verificar se o documento já está completamente
         # sincronizado com a versão recebida.
         if (
-            ids_existentes == ids_recebidos_set
-            and versoes_existentes == {document_version}
+            ids_existentes == conjunto_ids_recebidos
+            and versoes_existentes == {versao_documento}
         ):
-            print(f"Documento {document_id}: sem alterações.")
+            print(f"Documento {id_documento}: sem alterações.")
             continue
 
-        docs_por_id = {
-            doc.metadata["chunk_id"]: doc
-            for doc in docs_documento
+        blocos_por_id = {
+            bloco.metadata["chunk_id"]: bloco
+            for bloco in blocos_documento
         }
 
-        # 1. Inserir chunks que ainda não existem.
+        # 1. Inserir blocos que ainda não existem.
         ids_novos = [
-            chunk_id
-            for chunk_id in ids_recebidos
-            if chunk_id not in ids_existentes
+            id_bloco
+            for id_bloco in ids_recebidos
+            if id_bloco not in ids_existentes
         ]
 
         if ids_novos:
-            db_vector.add_documents(
-                documents=[docs_por_id[chunk_id] for chunk_id in ids_novos],
+            banco_vetorial.add_documents(
+                documents=[
+                    blocos_por_id[id_bloco]
+                    for id_bloco in ids_novos
+                ],
                 ids=ids_novos
             )
 
-        # 2. Atualizar chunks existentes com o mesmo ID,
+        # 2. Actualizar blocos existentes com o mesmo ID,
         # caso a composição ou os metadados tenham mudado.
         ids_comuns = [
-            chunk_id
-            for chunk_id in ids_recebidos
-            if chunk_id in ids_existentes
+            id_bloco
+            for id_bloco in ids_recebidos
+            if id_bloco in ids_existentes
         ]
 
         if ids_comuns:
-            db_vector.update_documents(
+            banco_vetorial.update_documents(
                 ids=ids_comuns,
                 documents=[
-                    docs_por_id[chunk_id]
-                    for chunk_id in ids_comuns
+                    blocos_por_id[id_bloco]
+                    for id_bloco in ids_comuns
                 ]
             )
 
-        # 3. Remover chunks antigos ou que desapareceram
-        # da versão atual do documento.
-        ids_antigos = ids_existentes - ids_recebidos_set
+        # 3. Remover blocos antigos ou que desapareceram
+        # da versão actual do documento.
+        ids_antigos = ids_existentes - conjunto_ids_recebidos
 
         if ids_antigos:
-            db_vector.delete(ids=list(ids_antigos))
+            banco_vetorial.delete(ids=list(ids_antigos))
 
         print(
-            f"Documento {document_id} sincronizado. "
-            f"Versão: {document_version}"
+            f"Documento {id_documento} sincronizado. "
+            f"Versão: {versao_documento}"
         )
 
-    return db_vector
+    return banco_vetorial

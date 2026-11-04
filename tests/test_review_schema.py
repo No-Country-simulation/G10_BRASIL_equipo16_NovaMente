@@ -1,95 +1,105 @@
+
 from pydantic import ValidationError
 import pytest
+
 from ai_stack.schemas import ReviewReport
 
 
-def test_review_aprovado():
-    dados = {
-    "status": "approved",
-    "summary": "Foi aprovado",
-    "issues": [    ]
+def test_deve_validar_relatorio_aprovado():
+    dados_revisao = {
+        "status": "approved",
+        "summary": "Foi aprovado",
+        "issues": []
+    }
 
-   
-}
-    dados_validos = ReviewReport.model_validate(dados)
-
-def test_review_com_problemas():
-    dados = {
-    "status": "correction_required",
-    "summary": "Foi identificado um erro técnico.",
-    "issues": [
-        {
-            "item_id": "q_001",
-            "item_type": "question",
-            "category": "technical_accuracy",
-            "description": "A definição apresentada está incorreta.",
-            "evidence": "O contexto apresenta uma definição diferente.",
-            "suggestion": "Corrigir a definição da pergunta."
-        }
-    ]
-}
-    dados_validos = ReviewReport.model_validate(dados)
+    relatorio_validado = ReviewReport.model_validate(dados_revisao)
 
 
-def test_categoria_invalida():
-    dados = {
-    "status": "correction_required",
-    "summary": "Foi identificado um erro técnico.",
-    "issues": [
-        {
-            "item_id": "q_001",
-            "item_type": "question",
-            "category": "wrong_answer",
-            "description": "A definição apresentada está incorreta.",
-            "evidence": "O contexto apresenta uma definição diferente.",
-            "suggestion": "Corrigir a definição da pergunta."
-        }
-    ]
-}
-    with pytest.raises(ValidationError):
-        ReviewReport.model_validate(dados)
-
-def test_status_invalido():
-    dados = {
-        "status": "accepted",
+def test_deve_validar_relatorio_com_problemas():
+    dados_revisao = {
+        "status": "correction_required",
         "summary": "Foi identificado um erro técnico.",
         "issues": [
             {
                 "item_id": "q_001",
                 "item_type": "question",
-               "category": "technical_accuracy",
+                "category": "technical_accuracy",
                 "description": "A definição apresentada está incorreta.",
                 "evidence": "O contexto apresenta uma definição diferente.",
                 "suggestion": "Corrigir a definição da pergunta."
             }
         ]
     }
-    with pytest.raises(ValidationError):
-        ReviewReport.model_validate(dados)
 
-def test_aprovado_com_problemas():
-    dados = {
-    "status": "approved",
-    "summary": "Foi identificado um erro técnico.",
-    "issues": [
-        {
-            "item_id": "q_001",
-            "item_type": "question",
-            "category": "technical_accuracy",
-            "description": "A definição apresentada está incorreta.",
-            "evidence": "O contexto apresenta uma definição diferente.",
-            "suggestion": "Corrigir a definição da pergunta."
-        }
-    ]
-}   
-    with pytest.raises(ValidationError):
-        ReviewReport.model_validate(dados)
+    relatorio_validado = ReviewReport.model_validate(dados_revisao)
 
-def test_correcao_sem_problemas():
-    dados = {
+
+def test_deve_rejeitar_categoria_invalida():
+    dados_revisao = {
         "status": "correction_required",
         "summary": "Foi identificado um erro técnico.",
-        "issues": [ ]
+        "issues": [
+            {
+                "item_id": "q_001",
+                "item_type": "question",
+                "category": "wrong_answer",
+                "description": "A definição apresentada está incorreta.",
+                "evidence": "O contexto apresenta uma definição diferente.",
+                "suggestion": "Corrigir a definição da pergunta."
+            }
+        ]
     }
+
     with pytest.raises(ValidationError):
-        ReviewReport.model_validate(dados)
+        ReviewReport.model_validate(dados_revisao)
+
+
+def test_deve_rejeitar_status_invalido():
+    dados_revisao = {
+        "status": "accepted",
+        "summary": "Foi identificado um erro técnico.",
+        "issues": [
+            {
+                "item_id": "q_001",
+                "item_type": "question",
+                "category": "technical_accuracy",
+                "description": "A definição apresentada está incorreta.",
+                "evidence": "O contexto apresenta uma definição diferente.",
+                "suggestion": "Corrigir a definição da pergunta."
+            }
+        ]
+    }
+
+    with pytest.raises(ValidationError):
+        ReviewReport.model_validate(dados_revisao)
+
+
+def test_deve_rejeitar_relatorio_aprovado_com_problemas():
+    dados_revisao = {
+        "status": "approved",
+        "summary": "Foi identificado um erro técnico.",
+        "issues": [
+            {
+                "item_id": "q_001",
+                "item_type": "question",
+                "category": "technical_accuracy",
+                "description": "A definição apresentada está incorreta.",
+                "evidence": "O contexto apresenta uma definição diferente.",
+                "suggestion": "Corrigir a definição da pergunta."
+            }
+        ]
+    }
+
+    with pytest.raises(ValidationError):
+        ReviewReport.model_validate(dados_revisao)
+
+
+def test_deve_rejeitar_correcao_sem_problemas():
+    dados_revisao = {
+        "status": "correction_required",
+        "summary": "Foi identificado um erro técnico.",
+        "issues": []
+    }
+
+    with pytest.raises(ValidationError):
+        ReviewReport.model_validate(dados_revisao)

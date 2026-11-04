@@ -6,9 +6,6 @@ import ai_stack.agents.reviewer as reviewer
 
 
 
-import ai_stack.agents.reviewer as reviewer
-
-
 def test_reviewer_aprovado(monkeypatch):
 
     json_response = """
@@ -20,22 +17,22 @@ def test_reviewer_aprovado(monkeypatch):
     """
 
     # Simula a resposta do Groq
-    def fake_generate_completion(messages):
+    def fake_gerar_resposta_llm(messages):
         return json_response
 
     # Substitui a chamada real ao Groq
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
-        fake_generate_completion
+        "gerar_resposta_llm",
+        fake_gerar_resposta_llm
     )
 
     # Executa o Revisor
-    report = reviewer.review_educational_content(
-        context="O Query Folding traduz transformações para a linguagem da fonte.",
-        educational_package={"title": "Quiz sobre Query Folding"},
-        profile="intermediario",
-        educational_format="quiz"
+    report = reviewer.revisar_conteudo_educativo(
+        contexto="O Query Folding traduz transformações para a linguagem da fonte.",
+        pacote_educativo={"title": "Quiz sobre Query Folding"},
+        perfil="intermediario",
+        formato_educativo="quiz"
     )
 
     # Verifica o resultado
@@ -55,27 +52,27 @@ def test_reviewer_com_problemas(monkeypatch):
                 "item_type": "question",
                 "category": "technical_accuracy",
                 "description": "A definição apresentada está incorreta.",
-                "evidence": "O contexto apresenta uma definição diferente.",
+                "evidence": "O contextoo apresenta uma definição diferente.",
                 "suggestion": "Corrigir a definição da pergunta."
             }
         ]
     }
     """
 
-    def fake_generate_completion(messages):
+    def fake_gerar_resposta_llm(messages):
         return json_response
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
-        fake_generate_completion
+        "gerar_resposta_llm",
+        fake_gerar_resposta_llm
     )
 
-    report = reviewer.review_educational_content(
-        context="O contexto apresenta a definição correta.",
-        educational_package={"title": "Quiz sobre o tema"},
-        profile="intermediario",
-        educational_format="quiz"
+    report = reviewer.revisar_conteudo_educativo(
+        contexto="O contextoo apresenta a definição correta.",
+        pacote_educativo={"title": "Quiz sobre o tema"},
+        perfil="intermediario",
+        formato_educativo="quiz"
     )
 
     assert report.status.value == "correction_required"
@@ -86,47 +83,47 @@ def test_reviewer_com_problemas(monkeypatch):
 
 def test_reviewer_json_invalido(monkeypatch):
 
-    def fake_generate_completion(messages):
+    def fake_gerar_resposta_llm(messages):
         return "Esta resposta não é um JSON válido."
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
-        fake_generate_completion
+        "gerar_resposta_llm",
+        fake_gerar_resposta_llm
     )
 
     with pytest.raises(ValueError, match="JSON inválido"):
-        reviewer.review_educational_content(
-            context="Contexto de teste.",
-            educational_package={"title": "Quiz de teste"},
-            profile="intermediario",
-            educational_format="quiz"
+        reviewer.revisar_conteudo_educativo(
+            contexto="contextoo de teste.",
+            pacote_educativo={"title": "Quiz de teste"},
+            perfil="intermediario",
+            formato_educativo="quiz"
         )
 
 
 def test_reviewer_resposta_vazia(monkeypatch):
 
-    def fake_generate_completion(messages):
+    def fake_gerar_resposta_llm(messages):
         return ""
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
-        fake_generate_completion
+        "gerar_resposta_llm",
+        fake_gerar_resposta_llm
     )
 
     with pytest.raises(ValueError, match="resposta vazia"):
-        reviewer.review_educational_content(
-            context="Contexto de teste.",
-            educational_package={"title": "Quiz de teste"},
-            profile="intermediario",
-            educational_format="quiz"
+        reviewer.revisar_conteudo_educativo(
+            contexto="contextoo de teste.",
+            pacote_educativo={"title": "Quiz de teste"},
+            perfil="intermediario",
+            formato_educativo="quiz"
         )
 
 
 def test_reviewer_estrutura_invalida(monkeypatch):
 
-    def fake_generate_completion(messages):
+    def fake_gerar_resposta_llm(messages):
         return """
         {
             "status": "accepted",
@@ -137,16 +134,16 @@ def test_reviewer_estrutura_invalida(monkeypatch):
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
-        fake_generate_completion
+        "gerar_resposta_llm",
+        fake_gerar_resposta_llm
     )
 
     with pytest.raises(ValidationError):
-        reviewer.review_educational_content(
-            context="Contexto de teste.",
-            educational_package={"title": "Quiz de teste"},
-            profile="intermediario",
-            educational_format="quiz"
+        reviewer.revisar_conteudo_educativo(
+            contexto="contextoo de teste.",
+            pacote_educativo={"title": "Quiz de teste"},
+            perfil="intermediario",
+            formato_educativo="quiz"
         )
 
 
@@ -164,15 +161,15 @@ def test_reviewer_chama_llm(monkeypatch):
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
+        "gerar_resposta_llm",
         fake_llm
     )
 
-    reviewer.review_educational_content(
-        context="Contexto de teste.",
-        educational_package={"title": "Quiz de teste"},
-        profile="intermediario",
-        educational_format="quiz"
+    reviewer.revisar_conteudo_educativo(
+        contexto="contextoo de teste.",
+        pacote_educativo={"title": "Quiz de teste"},
+        perfil="intermediario",
+        formato_educativo="quiz"
     )
 
     fake_llm.assert_called_once()
@@ -192,25 +189,25 @@ def test_reviewer_envia_dados_corretos(monkeypatch):
 
     monkeypatch.setattr(
         reviewer,
-        "generate_completion",
+        "gerar_resposta_llm",
         fake_llm
     )
 
-    contexto = "Query Folding traduz transformações para SQL."
+    contextoo = "Query Folding traduz transformações para SQL."
     pacote = {"title": "Quiz sobre Query Folding"}
 
-    reviewer.review_educational_content(
-        context=contexto,
-        educational_package=pacote,
-        profile="intermediario",
-        educational_format="quiz"
+    reviewer.revisar_conteudo_educativo(
+        contexto=contextoo,
+        pacote_educativo=pacote,
+        perfil="intermediario",
+        formato_educativo="quiz"
     )
 
     messages = fake_llm.call_args.args[0]
 
     user_message = messages[1]["content"]
 
-    assert contexto in user_message
+    assert contextoo in user_message
     assert "Quiz sobre Query Folding" in user_message
     assert "intermediario" in user_message
     assert "quiz" in user_message

@@ -1,27 +1,30 @@
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from typing import List
 from ai_stack.config import CHUNK_SIZE, CHUNK_OVERLAP
 
-def validar_docs(docs):
-    if not docs:
+
+def validar_documentos(documentos):
+    if not documentos:
         raise ValueError('Lista de Documentos vazia ou nula')
 
-def validar_identidade_documentos(docs: List[Document]) -> None:
+
+def validar_identidade_dos_documentos(documentos: List[Document]) -> None:
     versoes_por_documento = {}
 
-    for indice, doc in enumerate(docs):
+    for indice, documento in enumerate(documentos):
 
         # 1. Validar o tipo do documento
-        if not isinstance(doc, Document):
+        if not isinstance(documento, Document):
             raise TypeError(
                 f"O elemento na posição {indice} não é um Document"
             )
 
         # 2. Obter e validar os metadados
-        metadata = doc.metadata
+        metadados = documento.metadata
 
-        if not isinstance(metadata, dict):
+        if not isinstance(metadados, dict):
             raise TypeError(
                 f"Os metadados do documento {indice} devem ser um dicionário"
             )
@@ -29,12 +32,12 @@ def validar_identidade_documentos(docs: List[Document]) -> None:
         for campo in ("document_id", "document_version"):
 
             # Verificar se o campo existe
-            if campo not in metadata or metadata[campo] is None:
+            if campo not in metadados or metadados[campo] is None:
                 raise ValueError(
                     f"Documento na posição {indice} sem {campo}"
                 )
 
-            valor = metadata[campo]
+            valor = metadados[campo]
 
             # Verificar o tipo
             if not isinstance(valor, str):
@@ -55,51 +58,61 @@ def validar_identidade_documentos(docs: List[Document]) -> None:
                 )
 
         # 3. Obter os identificadores já validados
-        document_id = metadata["document_id"]
-        document_version = metadata["document_version"]
+        id_documento = metadados["document_id"]
+        versao_documento = metadados["document_version"]
 
         # 4. Verificar consistência das versões
-        if document_id in versoes_por_documento:
+        if id_documento in versoes_por_documento:
 
-            if versoes_por_documento[document_id] != document_version:
+            if versoes_por_documento[id_documento] != versao_documento:
                 raise ValueError(
-                    f"O documento {document_id} possui versões "
+                    f"O documento {id_documento} possui versões "
                     "diferentes na mesma ingestão"
                 )
 
         else:
-            versoes_por_documento[document_id] = document_version
-def chunker(docs: List[Document]) -> List[Document]:
-    validar_docs(docs)
-    
-    validar_identidade_documentos(docs)
+            versoes_por_documento[id_documento] = versao_documento
 
-    docsFiltrados = [
-        doc for doc in docs
-        if doc.page_content and doc.page_content.strip() != ""
+
+def dividir_documentos_em_blocos(documentos: List[Document]) -> List[Document]:
+    validar_documentos(documentos)
+
+    validar_identidade_dos_documentos(documentos)
+
+    documentos_filtrados = [
+        documento for documento in documentos
+        if documento.page_content and documento.page_content.strip() != ""
     ]
-    
-    if not docsFiltrados:
+
+    if not documentos_filtrados:
         raise ValueError('Nenhum documento com conteudo valido após filtro')
-            
-    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
-    chunks = []
-    for doc in docsFiltrados:
-        chunk_atual= splitter.split_documents([doc])
-        
-        
-        for i, chunk in enumerate(chunk_atual):
-            document_id = chunk.metadata["document_id"]
-            document_version = chunk.metadata["document_version"]
 
-            page = chunk.metadata.get("page")
-            page_ref = f"p{page}" if page is not None else "sem-pagina"
+    divisor_texto = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP
+    )
 
-            chunk.metadata["chunk_index"] = i
+    blocos = []
 
-            chunk.metadata["chunk_id"] = (
-                f"{document_id}_{document_version}_{page_ref}_c{i}")
-        chunks.extend(chunk_atual)
-    return chunks      
-        
-        
+    for documento in documentos_filtrados:
+        blocos_atuais = divisor_texto.split_documents([documento])
+
+        for indice_bloco, bloco in enumerate(blocos_atuais):
+            id_documento = bloco.metadata["document_id"]
+            versao_documento = bloco.metadata["document_version"]
+
+            pagina = bloco.metadata.get("page")
+            referencia_pagina = (
+                f"p{pagina}" if pagina is not None else "sem-pagina"
+            )
+
+            bloco.metadata["chunk_index"] = indice_bloco
+
+            bloco.metadata["chunk_id"] = (
+                f"{id_documento}_{versao_documento}_"
+                f"{referencia_pagina}_c{indice_bloco}"
+            )
+
+        blocos.extend(blocos_atuais)
+
+    return blocos

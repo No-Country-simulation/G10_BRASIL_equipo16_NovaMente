@@ -9,37 +9,45 @@ from langchain_community.document_loaders import (
 )
 
 
-def reader(file: Path,document_id: str,document_version: str) -> List[Document]:
+def carregar_documento(
+    caminho_arquivo: Path,
+    id_documento: str,
+    versao_documento: str
+) -> List[Document]:
 
-    if not file.exists():
-        raise FileNotFoundError(f"Arquivo {file} inexistente")
+    if not caminho_arquivo.exists():
+        raise FileNotFoundError(
+            f"Arquivo {caminho_arquivo} inexistente"
+        )
 
-    if not file.is_file():
-        raise ValueError(f"{file} não é um arquivo válido")
+    if not caminho_arquivo.is_file():
+        raise ValueError(
+            f"{caminho_arquivo} não é um arquivo válido"
+        )
 
-    if not isinstance(document_id, str) or not document_id.strip():
+    if not isinstance(id_documento, str) or not id_documento.strip():
         raise ValueError("document_id inválido")
 
-    if not isinstance(document_version, str) or not document_version.strip():
+    if not isinstance(versao_documento, str) or not versao_documento.strip():
         raise ValueError("document_version inválido")
 
-    extensao = file.suffix.lower()
+    extensao = caminho_arquivo.suffix.lower()
 
     if extensao not in [".pdf", ".txt", ".md"]:
         raise ValueError(f"Extensão {extensao} inválida")
 
     if extensao == ".pdf":
-        leitor = PyMuPDFLoader(str(file))
+        leitor = PyMuPDFLoader(str(caminho_arquivo))
     else:
-        leitor = TextLoader(str(file), encoding="utf-8")
+        leitor = TextLoader(str(caminho_arquivo), encoding="utf-8")
 
-    docs = leitor.load()
+    documentos = leitor.load()
 
-    for doc in docs:
-        doc.metadata.update({
-            "source": file.name,
-            "document_id": document_id,
-            "document_version": document_version
+    for documento in documentos:
+        documento.metadata.update({
+            "source": caminho_arquivo.name,
+            "document_id": id_documento,
+            "document_version": versao_documento
         })
 
-    return docs
+    return documentos
