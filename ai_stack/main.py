@@ -47,7 +47,7 @@ def main():
     embedding_model = obter_modelo_embeddings()
     db_vector = criar_banco_vetorial(chunks, embedding_model)
 
-    resposta = gerar_resposta_rag("o que e Power Query??", db_vector, "intermediario","flashcards")
+    resposta = gerar_resposta_rag("o que e Power Query??", db_vector, "intermediario","tutorial")
     
     print("\n=== RESULTADO DO PIPELINE ===")
 
