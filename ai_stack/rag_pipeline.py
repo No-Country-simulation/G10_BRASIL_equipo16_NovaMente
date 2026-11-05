@@ -68,8 +68,13 @@ def gerar_conteudo_corrigido( contexto: str, pacote_educativo: dict, relatorio_r
 
     except json.JSONDecodeError as erro:
         raise ValueError(
-            f"O Corrector devolveu JSON inválido: {erro}"
+            f"O LLM devolveu JSON inválido: {erro}"
         ) from erro
+    if not isinstance(dados_resposta, dict):
+        raise TypeError(
+            "A resposta do LLM deveria ser um objeto JSON, "
+            f"mas foi recebido: {type(dados_resposta).__name__}"
+        )
 
     pacote_validado = EducationalPackage.model_validate(dados_resposta)
 
@@ -81,7 +86,7 @@ def gerar_resposta_rag( pergunta: str, banco_vetorial, nivel: str,formato: str) 
     formato_validado = validar_formato(formato)
 
     # 2. Recuperar documentos relevantes
-    documentos_fonte = recuperar_documentos_relevantes(banco_vetorial, pergunta, k=3)
+    documentos_fonte = recuperar_documentos_relevantes(banco_vetorial, pergunta, quantidade_documentos=3)
 
     if not documentos_fonte:
         return {

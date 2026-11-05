@@ -140,7 +140,7 @@ def test_reviewer_estrutura_invalida(monkeypatch):
 
     with pytest.raises(ValidationError):
         reviewer.revisar_conteudo_educativo(
-            contexto="contextoo de teste.",
+            contexto="contexto de teste.",
             pacote_educativo={"title": "Quiz de teste"},
             perfil="intermediario",
             formato_educativo="quiz"
@@ -166,7 +166,7 @@ def test_reviewer_chama_llm(monkeypatch):
     )
 
     reviewer.revisar_conteudo_educativo(
-        contexto="contextoo de teste.",
+        contexto="contexto de teste.",
         pacote_educativo={"title": "Quiz de teste"},
         perfil="intermediario",
         formato_educativo="quiz"

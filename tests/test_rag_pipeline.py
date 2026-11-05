@@ -1,13 +1,17 @@
 
 import ai_stack.rag_pipeline as modulo_pipeline
-
+import json
 from langchain_core.documents import Document
 from pydantic import ValidationError
 from unittest.mock import Mock
 
 import pytest
-
-from ai_stack.schemas import ReviewReport, ReviewStatus
+from ai_stack.schemas import (
+    ReviewReport,
+    ReviewStatus,
+    ReviewIssue,
+    ReviewCategory
+)
 
 
 def test_deve_gerar_flashcards_validos(monkeypatch):
@@ -67,7 +71,6 @@ def test_deve_gerar_flashcards_validos(monkeypatch):
         "revisar_conteudo_educativo",
         mock_revisor
     )
-
     retorno_pipeline = modulo_pipeline.gerar_resposta_rag(
         "Power Query",
         None,
@@ -388,3 +391,231 @@ def test_deve_gerar_quiz_valido(monkeypatch):
     assert retorno_pipeline["review_report"]["status"] == "approved"
 
     mock_revisor.assert_called_once()
+
+
+def test_deve_corrigir_conteudo_e_ser_aprovado(monkeypatch):
+
+    documento_fonte = Document(
+        page_content="O Power Query permite transformar dados.",
+        metadata={
+            "source": "manual-power-query.md",
+            "page": 0
+        }
+    )
+
+    monkeypatch.setattr(
+        modulo_pipeline,
+        "recuperar_documentos_relevantes",
+        lambda *argumentos, **argumentos_nomeados: [documento_fonte]
+    )
+
+    pacote_inicial = {
+        "metadata": {
+            "profile_applied": "intermediario",
+            "format_generated": "flashcards",
+            "key_concepts": ["Power Query"],
+            "study_time_minutes": 5,
+            "prerequisites": []
+        },
+        "content": {
+            "title": "Introdução ao Power Query",
+            "cards": [
+                {
+                    "card_id": "card_001",
+                    "front": "O que é Power Query?",
+                    "back": "É uma ferramenta de armazenamento de dados."
+                }
+            ]
+        }
+    }
+
+    pacote_corrigido = {
+        "metadata": {
+            "profile_applied": "intermediario",
+            "format_generated": "flashcards",
+            "key_concepts": ["Power Query"],
+            "study_time_minutes": 5,
+            "prerequisites": []
+        },
+        "content": {
+            "title": "Introdução ao Power Query",
+            "cards": [
+                {
+                    "card_id": "card_001",
+                    "front": "O que é Power Query?",
+                    "back": "É uma ferramenta para transformar dados."
+                }
+            ]
+        }
+    }
+
+    respostas_llm = [
+        json.dumps(pacote_inicial),
+        json.dumps(pacote_corrigido)
+    ]
+
+    mock_llm = Mock(side_effect=respostas_llm)
+
+    monkeypatch.setattr(
+        modulo_pipeline,
+        "gerar_resposta_llm",
+        mock_llm
+    )
+
+    relatorio_com_problemas = ReviewReport(
+    status=ReviewStatus.correction_required,
+    summary="Foi identificado um erro técnico.",
+    issues=[
+        ReviewIssue(
+            item_id="card_001",
+            item_type="flashcard",
+            category=ReviewCategory.technical_accuracy,
+            description="A definição apresentada está incorreta.",
+            evidence="O contexto apresenta uma definição diferente.",
+            suggestion="Corrigir a definição do cartão."
+        )
+    ]
+)
+
+    relatorio_aprovado = ReviewReport(
+        status=ReviewStatus.approved,
+        summary="Conteúdo corrigido e aprovado.",
+        issues=[]
+    )
+
+    mock_revisor = Mock(
+        side_effect=[
+            relatorio_com_problemas,
+            relatorio_aprovado
+        ]
+    )
+
+    monkeypatch.setattr(
+        modulo_pipeline,
+        "revisar_conteudo_educativo",
+        mock_revisor
+    )
+
+    retorno_pipeline = modulo_pipeline.gerar_resposta_rag(
+        "Power Query",
+        None,
+        "intermediario",
+        "flashcards"
+    )
+
+    assert retorno_pipeline["status"] == "success"
+
+    assert retorno_pipeline["answer"]["content"]["cards"][0]["back"] == (
+        "É uma ferramenta para transformar dados."
+    )
+
+    assert retorno_pipeline["review_report"]["status"] == "approved"
+
+    assert mock_revisor.call_count == 2
+    assert mock_llm.call_count == 2
+
+
+def test_deve_exigir_revisao_manual_apos_limite_de_correcoes(monkeypatch):
+    documento_fonte = Document(
+        page_content= "O Power Query permite transformar dados.",
+        metadata={
+             "source": "manual-power-query.md",
+             "page": 0
+        }
+    )
+
+    monkeypatch.setattr(
+        modulo_pipeline,
+        "recuperar_documentos_relevantes",
+        lambda *argumentos, **kwargs  : [documento_fonte]
+    )
+
+    pacote_inicial = {
+            "metadata": {
+                "profile_applied": "intermediario",
+                "format_generated": "flashcards",
+                "key_concepts": ["Power Query"],
+                "study_time_minutes": 5,
+                "prerequisites": []
+            },
+            "content": {
+                "title": "Introdução ao Power Query",
+                "cards": [
+                    {
+                        "card_id": "card_001",
+                        "front": "O que é Power Query?",
+                        "back": "É uma ferramenta de armazenamento de dados."
+                    }
+                ]
+            }
+        }
+    relatorio_com_problemas = ReviewReport(
+        status=ReviewStatus.correction_required,
+        summary="Foi identificado um erro técnico.",
+        issues=[
+            ReviewIssue(
+                item_id="card_001",
+                item_type="flashcard",
+                category=ReviewCategory.technical_accuracy,
+                description="A definição apresentada está incorreta.",
+                evidence="O contexto apresenta uma definição diferente.",
+                suggestion="Corrigir a definição do cartão."
+            )
+        ]
+    )
+
+
+    pacote_corrigido = {
+            "metadata": {
+                "profile_applied": "intermediario",
+                "format_generated": "flashcards",
+                "key_concepts": ["Power Query"],
+                "study_time_minutes": 5,
+                "prerequisites": []
+            },
+            "content": {
+                "title": "Introdução ao Power Query",
+                "cards": [
+                    {
+                        "card_id": "card_001",
+                        "front": "O que é Power Query?",
+                        "back": "É uma ferramenta para transformar dados."
+                    }
+                ]
+            }
+
+    }
+    respostas_llm = [
+    json.dumps(pacote_inicial),
+    json.dumps(pacote_corrigido),
+    json.dumps(pacote_corrigido)
+]
+    relatorios_revisor = [
+    relatorio_com_problemas,
+    relatorio_com_problemas,
+    relatorio_com_problemas
+]
+    mock_llm = Mock(side_effect=respostas_llm)
+    mock_revisor = Mock(side_effect=relatorios_revisor)
+
+    monkeypatch.setattr(
+    modulo_pipeline,
+    "gerar_resposta_llm",
+    mock_llm
+)
+
+    monkeypatch.setattr(
+    modulo_pipeline,
+    "revisar_conteudo_educativo",
+    mock_revisor
+)
+    retorno_pipeline = modulo_pipeline.gerar_resposta_rag(
+    "Power Query",
+    None,
+    "intermediario",
+    "flashcards"
+)
+    assert retorno_pipeline["status"] == "requires_manual_review"
+    assert retorno_pipeline["answer"] is None
+    assert mock_revisor.call_count == 3
+    assert mock_llm.call_count == 3

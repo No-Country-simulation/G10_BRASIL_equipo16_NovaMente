@@ -1,3 +1,4 @@
+import json
 from ai_stack.ingestion.loader import carregar_documento
 from ai_stack.ingestion.chunking import dividir_documentos_em_blocos
 from ai_stack.ingestion.vector_store import criar_banco_vetorial
@@ -48,8 +49,40 @@ def main():
 
     resposta = gerar_resposta_rag("o que e Power Query??", db_vector, "intermediario","flashcards")
     
-    print("Resposta gerada:")
-    print(resposta["answer"])
+    print("\n=== RESULTADO DO PIPELINE ===")
+
+    print("Estado:", resposta.get("status"))
+    print("Mensagem:", resposta.get("message"))
+
+    print("\n=== RELATÓRIO DO REVIEWER ===")
+
+    relatorio = resposta.get("review_report")
+
+    if relatorio is None:
+        print("Nenhum relatório de revisão foi devolvido.")
+
+    elif isinstance(relatorio, dict):
+        print(json.dumps(
+            relatorio,
+            ensure_ascii=False,
+            indent=2,
+            default=str
+        ))
+
+    elif hasattr(relatorio, "model_dump"):
+        print(json.dumps(
+            relatorio.model_dump(mode="json"),
+            ensure_ascii=False,
+            indent=2,
+            default=str
+        ))
+
+    else:
+        print(relatorio)
+
+    print("\n=== CONTEÚDO GERADO ===")
+    print(resposta.get("answer"))
+
     print("=="*40)
     dados = db_vector.get(include=["metadatas"])
 
