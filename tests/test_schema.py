@@ -1,3 +1,7 @@
+
+from pydantic import ValidationError
+import pytest
+
 from ai_stack.schemas import (
     EducationalPackage,
     FlashcardContent,
@@ -5,13 +9,10 @@ from ai_stack.schemas import (
     QuizContent,
     QuizQuestion,
 )
-from pydantic import ValidationError
-import pytest
 
 
-
-def test_flashcard():
-    dados = {
+def test_deve_validar_pacote_de_flashcards():
+    dados_pacote = {
         "metadata": {
             "profile_applied": "iniciante",
             "format_generated": "flashcards",
@@ -31,14 +32,14 @@ def test_flashcard():
         }
     }
 
-    dados_validados = EducationalPackage.model_validate(dados)
+    pacote_validado = EducationalPackage.model_validate(dados_pacote)
 
-    assert isinstance(dados_validados, EducationalPackage)
-    assert isinstance(dados_validados.content, FlashcardContent)
+    assert isinstance(pacote_validado, EducationalPackage)
+    assert isinstance(pacote_validado.content, FlashcardContent)
 
 
-def test_tutorial():
-    dados = {
+def test_deve_validar_pacote_de_tutorial():
+    dados_pacote = {
         "metadata": {
             "profile_applied": "iniciante",
             "format_generated": "tutorial",
@@ -59,14 +60,14 @@ def test_tutorial():
         }
     }
 
-    dados_validados = EducationalPackage.model_validate(dados)
+    pacote_validado = EducationalPackage.model_validate(dados_pacote)
 
-    assert isinstance(dados_validados, EducationalPackage)
-    assert isinstance(dados_validados.content, TutorialContent)
+    assert isinstance(pacote_validado, EducationalPackage)
+    assert isinstance(pacote_validado.content, TutorialContent)
 
 
-def test_formato_incompativel():
-    dados = {
+def test_deve_rejeitar_formato_incompativel():
+    dados_pacote = {
         "metadata": {
             "profile_applied": "iniciante",
             "format_generated": "tutorial",
@@ -87,11 +88,11 @@ def test_formato_incompativel():
     }
 
     with pytest.raises(ValidationError):
-        EducationalPackage.model_validate(dados)
+        EducationalPackage.model_validate(dados_pacote)
 
-    
-def test_quiz_valido():
-    dados = {
+
+def test_deve_validar_pacote_de_quiz():
+    dados_pacote = {
         "metadata": {
             "profile_applied": "iniciante",
             "format_generated": "quiz",
@@ -122,15 +123,14 @@ def test_quiz_valido():
         }
     }
 
-    dados_validados = EducationalPackage.model_validate(dados)
+    pacote_validado = EducationalPackage.model_validate(dados_pacote)
 
-    assert isinstance(dados_validados, EducationalPackage)
-    assert isinstance(dados_validados.content, QuizContent)
+    assert isinstance(pacote_validado, EducationalPackage)
+    assert isinstance(pacote_validado.content, QuizContent)
 
 
-# 2. Rejeitar opções com identificadores duplicados
-def test_quiz_opcoes_duplicadas():
-    dados = {
+def test_deve_rejeitar_opcoes_com_ids_duplicados():
+    dados_pergunta = {
         "question_id": "q_001",
         "question": "O que é Python?",
         "options": [
@@ -142,12 +142,11 @@ def test_quiz_opcoes_duplicadas():
     }
 
     with pytest.raises(ValidationError):
-        QuizQuestion.model_validate(dados)
+        QuizQuestion.model_validate(dados_pergunta)
 
 
-# 3. Rejeitar resposta correta inexistente
-def test_quiz_resposta_inexistente():
-    dados = {
+def test_deve_rejeitar_resposta_correta_inexistente():
+    dados_pergunta = {
         "question_id": "q_001",
         "question": "O que é Python?",
         "options": [
@@ -159,11 +158,10 @@ def test_quiz_resposta_inexistente():
     }
 
     with pytest.raises(ValidationError):
-        QuizQuestion.model_validate(dados)
+        QuizQuestion.model_validate(dados_pergunta)
 
 
-# 4. Rejeitar perguntas com identificadores duplicados
-def test_quiz_perguntas_duplicadas():
+def test_deve_rejeitar_perguntas_com_ids_duplicados():
     pergunta = {
         "question_id": "q_001",
         "question": "O que é Python?",
@@ -175,7 +173,7 @@ def test_quiz_perguntas_duplicadas():
         "justification": "Python é uma linguagem de programação."
     }
 
-    dados = {
+    dados_quiz = {
         "title": "Quiz de programação",
         "questions": [
             pergunta,
@@ -184,12 +182,11 @@ def test_quiz_perguntas_duplicadas():
     }
 
     with pytest.raises(ValidationError):
-        QuizContent.model_validate(dados)
+        QuizContent.model_validate(dados_quiz)
 
 
-# 5. Rejeitar Flashcards com identificadores duplicados
-def test_flashcards_ids_duplicados():
-    dados = {
+def test_deve_rejeitar_flashcards_com_ids_duplicados():
+    dados_flashcards = {
         "title": "Fundamentos de programação",
         "cards": [
             {
@@ -206,12 +203,11 @@ def test_flashcards_ids_duplicados():
     }
 
     with pytest.raises(ValidationError):
-        FlashcardContent.model_validate(dados)
+        FlashcardContent.model_validate(dados_flashcards)
 
 
-# 6. Rejeitar Quiz associado ao formato Flashcards
-def test_quiz_formato_incompativel():
-    dados = {
+def test_deve_rejeitar_quiz_com_formato_flashcards():
+    dados_pacote = {
         "metadata": {
             "profile_applied": "iniciante",
             "format_generated": "flashcards",
@@ -237,4 +233,4 @@ def test_quiz_formato_incompativel():
     }
 
     with pytest.raises(ValidationError):
-        EducationalPackage.model_validate(dados)
+        EducationalPackage.model_validate(dados_pacote)
