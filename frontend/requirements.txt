@@ -1,0 +1,7 @@
+# Dependências que o frontend ADICIONA ao projeto.
+# Para o modo IA, instale também o requirements.txt da raiz (ai_stack: langchain, chroma, groq, torch...).
+streamlit>=1.38,<2
+python-dotenv>=1.0
+
+# testes
+pytest>=8
