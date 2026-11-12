@@ -1,0 +1,53 @@
+{
+  "status": "success",
+  "answer": {
+    "metadata": {
+      "profile_applied": "iniciante",
+      "format_generated": "flashcards",
+      "key_concepts": ["Power Query", "Linguagem M", "Etapas aplicadas", "Transformação de dados"],
+      "study_time_minutes": 8,
+      "prerequisites": ["Noções básicas de planilhas"]
+    },
+    "content": {
+      "title": "Power Query para quem está começando",
+      "cards": [
+        {
+          "card_id": "card_001",
+          "front": "O que é o Power Query?",
+          "back": "É a camada de preparação de dados do Power BI: ela extrai e transforma os dados antes de eles serem carregados no modelo."
+        },
+        {
+          "card_id": "card_002",
+          "front": "Que linguagem o Power Query usa por baixo dos panos?",
+          "back": "A linguagem M. Cada clique na interface gera um passo em M que fica registrado nas Etapas Aplicadas."
+        },
+        {
+          "card_id": "card_003",
+          "front": "O que são as Etapas Aplicadas?",
+          "back": "A lista ordenada de transformações feitas em uma consulta. Elas são reexecutadas, na mesma ordem, a cada atualização dos dados."
+        },
+        {
+          "card_id": "card_004",
+          "front": "Onde devem ficar as transformações de limpeza e forma dos dados?",
+          "back": "No Power Query. Relacionamentos e granularidade ficam no modelo, e agregações dinâmicas ficam no DAX."
+        },
+        {
+          "card_id": "card_005",
+          "front": "O que acontece se eu colocar lógica de limpeza no DAX em vez do Power Query?",
+          "back": "A compressão piora, o tempo de atualização aumenta e as medidas ficam mais difíceis de ler."
+        }
+      ]
+    }
+  },
+  "sources": [
+    {"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0},
+    {"source": "1 - Guia de Power BI do Power Query ao DAX avançado (PL-300).md", "page": 0},
+    {"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0}
+  ],
+  "message": null,
+  "review_report": {
+    "status": "approved",
+    "summary": "Todos os cartões estão sustentados pelo contexto e a linguagem é adequada ao perfil iniciante.",
+    "issues": []
+  }
+}

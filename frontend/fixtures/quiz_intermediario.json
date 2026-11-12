@@ -1,0 +1,76 @@
+{
+  "status": "success",
+  "answer": {
+    "metadata": {
+      "profile_applied": "intermediario",
+      "format_generated": "quiz",
+      "key_concepts": ["Esquema estrela", "Tabela fato", "Dimensão", "Relacionamentos", "Cardinalidade"],
+      "study_time_minutes": 12,
+      "prerequisites": ["Power Query básico", "Noções de modelagem relacional"]
+    },
+    "content": {
+      "title": "Modelagem dimensional no Power BI",
+      "questions": [
+        {
+          "question_id": "q_001",
+          "question": "Em um esquema estrela, qual tabela concentra as métricas numéricas do negócio?",
+          "options": [
+            {"option_id": "a", "text": "A tabela de dimensão"},
+            {"option_id": "b", "text": "A tabela fato"},
+            {"option_id": "c", "text": "A tabela de calendário"},
+            {"option_id": "d", "text": "A tabela de parâmetros"}
+          ],
+          "correct_option_id": "b",
+          "justification": "A tabela fato (ex.: FatVendas) guarda os eventos e as medidas numéricas; as dimensões descrevem o contexto (cliente, produto, data)."
+        },
+        {
+          "question_id": "q_002",
+          "question": "Qual é a cardinalidade típica entre uma dimensão e a tabela fato?",
+          "options": [
+            {"option_id": "a", "text": "Um para um"},
+            {"option_id": "b", "text": "Muitos para muitos"},
+            {"option_id": "c", "text": "Um para muitos, da dimensão para a fato"},
+            {"option_id": "d", "text": "Não existe relacionamento"}
+          ],
+          "correct_option_id": "c",
+          "justification": "Cada linha da dimensão (um cliente) pode aparecer em muitas linhas da fato (vários pedidos). A filtragem flui da dimensão para a fato."
+        },
+        {
+          "question_id": "q_003",
+          "question": "Por que a qualidade do modelo influencia diretamente o desempenho dos relatórios?",
+          "options": [
+            {"option_id": "a", "text": "Porque cada visual gera uma consulta DAX enviada ao modelo semântico"},
+            {"option_id": "b", "text": "Porque o Power BI só aceita modelos em 3FN"},
+            {"option_id": "c", "text": "Porque o DAX não funciona sem o Power Query"},
+            {"option_id": "d", "text": "Porque os visuais são armazenados no modelo"}
+          ],
+          "correct_option_id": "a",
+          "justification": "Todo visual dispara uma consulta DAX contra o modelo; um modelo bem desenhado responde mais rápido e com medidas mais simples."
+        },
+        {
+          "question_id": "q_004",
+          "question": "Onde deve ficar a lógica de relacionamentos e granularidade?",
+          "options": [
+            {"option_id": "a", "text": "No Power Query"},
+            {"option_id": "b", "text": "No modelo"},
+            {"option_id": "c", "text": "Nas medidas DAX"},
+            {"option_id": "d", "text": "Nos visuais"}
+          ],
+          "correct_option_id": "b",
+          "justification": "A regra de ouro: transformações no Power Query, relacionamentos e granularidade no modelo, agregações dependentes de contexto no DAX."
+        }
+      ]
+    }
+  },
+  "sources": [
+    {"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0},
+    {"source": "3  - guia-power-bi-pl300.pdf", "page": 4},
+    {"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0}
+  ],
+  "message": null,
+  "review_report": {
+    "status": "approved",
+    "summary": "Perguntas tecnicamente corretas e ancoradas no manual; distratores plausíveis e sem ambiguidade.",
+    "issues": []
+  }
+}

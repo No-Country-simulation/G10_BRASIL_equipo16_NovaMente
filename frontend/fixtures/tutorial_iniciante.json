@@ -1,0 +1,45 @@
+{
+  "status": "success",
+  "answer": {
+    "metadata": {
+      "profile_applied": "iniciante",
+      "format_generated": "tutorial",
+      "key_concepts": ["Medida", "DAX", "SUM", "Contexto de filtro"],
+      "study_time_minutes": 15,
+      "prerequisites": ["Modelo com a tabela FatVendas carregada"]
+    },
+    "content": {
+      "title": "Sua primeira medida DAX, passo a passo",
+      "introduction": "Uma medida é um cálculo que o Power BI refaz toda vez que você muda um filtro no relatório. Vamos criar a medida de total de vendas.",
+      "steps": [
+        {
+          "title": "Abra a tabela fato",
+          "explanation": "No painel Dados, clique com o botão direito em FatVendas e escolha 'Nova medida'. A medida deve morar na tabela cujos números ela resume.",
+          "example": null
+        },
+        {
+          "title": "Escreva a fórmula",
+          "explanation": "Na barra de fórmulas, dê um nome à medida e use SUM para somar a coluna de valor.",
+          "example": "Total Vendas = SUM ( FatVendas[valor_total] )"
+        },
+        {
+          "title": "Teste em um visual",
+          "explanation": "Arraste 'Total Vendas' para um cartão. Depois adicione um segmentador por DimData[ano]: o valor muda sozinho, porque a medida respeita o contexto de filtro.",
+          "example": null
+        },
+        {
+          "title": "Formate o resultado",
+          "explanation": "Com a medida selecionada, defina o formato como moeda em Ferramentas de medida. Formatação pertence à medida, não ao visual.",
+          "example": null
+        }
+      ]
+    }
+  },
+  "sources": [
+    {"source": "2 - manual-pl300-preparacao-modelagem-dax.md", "page": 0},
+    {"source": "1 - Guia de Power BI do Power Query ao DAX avançado (PL-300).md", "page": 0},
+    {"source": "3  - guia-power-bi-pl300.pdf", "page": 11}
+  ],
+  "message": null,
+  "review_report": null
+}
