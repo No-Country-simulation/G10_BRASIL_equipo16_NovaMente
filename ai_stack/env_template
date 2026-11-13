@@ -1,1 +1,3 @@
-GOOGLE_API_KEY="sua_chave_aqui"
+GOOGLE_CLIENT_ID="seu-client-id-aqui.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="seu-client-secret-aqui"
+GOOGLE_API_KEY="sua_chave_do_gemini_aqui"
