@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 # Importa as funções dos módulos que criamos nas etapas anteriores
 from rag_pipeline import buscar_contexto, criar_base_vetorial
+from streamlit_google_auth import Authenticate
 
 # Carrega variáveis de ambiente (.env)
 load_dotenv()
@@ -16,27 +17,50 @@ st.set_page_config(
     page_title="Gerador Inteligente de Conteúdo Técnico", page_icon="🎓", layout="wide"
 )
 
-# Título principal
-st.title("🎓 Gerador Inteligente de Conteúdo Educacional (RAG + Agentes)")
-st.markdown("""
-Transforme documentações técnicas densas, manuais ou artigos em **tutoriais, quizzes, flashcards ou resumos** 
-personalizados para diferentes perfis e indústrias, com validação anti-alucinação.
-""")
+# ==========================================
+# CONFIGURAÇÃO DE AUTENTICAÇÃO GOOGLE
+# ==========================================
+authenticator = Authenticate(
+    secret_credentials_path={
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "redirect_uri": "http://localhost:8501",
+    },
+    cookie_name="rag_app_google_cookie",
+    cookie_key="chave_secreta_super_segura_para_cookies",
+    redirect_uri="http://localhost:8501",
+    scope=["openid", "email", "profile"],
+)
+
+# Verifica se o usuário está logado
+authenticator.check_authentication()
+
+# Se não estiver autenticado, exibe o botão de login
+if not st.session_state.get("connected", False):
+    st.title("🎓 Login - Gerador Inteligente de Conteúdo")
+    st.markdown("Faça login com sua conta Google para acessar a plataforma RAG.")
+
+    # Exibe o botão de login do Google
+    authenticator.login()
+    st.stop()  # Interrompe a execução do restante da página até que o login seja feito
 
 # ==========================================
-# BARRA LATERAL (CONFIGURAÇÕES E PARÂMETROS)
+# APLICAÇÃO PRINCIPAL (PROTEGIDA POR LOGIN)
 # ==========================================
+user_info = st.session_state.get("user_info", {})
+user_email = user_info.get("email", "Usuário")
+user_name = user_info.get("name", "Convidado")
+
+# Barra lateral com dados do usuário logado
 with st.sidebar:
-    st.header("⚙️ Configurações & Parâmetros")
+    st.write(f"👤 Logado como: **{user_name}**")
+    st.write(f"📧 `{user_email}`")
 
-    # Validação rápida da chave de API
-    api_key_status = os.getenv("GOOGLE_API_KEY")
-    if not api_key_status:
-        st.error("⚠️ `GOOGLE_API_KEY` não encontrada no arquivo .env!")
-    else:
-        st.success("✅ Chave Google Gemini configurada.")
-
+    # Botão de Logout nativo do componente
+    authenticator.logout("Sair", "sidebar")
     st.divider()
+
+    st.header("⚙️ Configurações & Parâmetros")
 
     # 1. Upload do Documento
     st.subheader("1. Documento de Entrada")
@@ -77,22 +101,23 @@ with st.sidebar:
     )
 
     st.divider()
-
-    # Botão de Execução
     botao_gerar = st.button(
         "🚀 Gerar Conteúdo Educacional", type="primary", use_container_width=True
     )
 
-# ==========================================
-# ÁREA PRINCIPAL (EXEUÇÃO E RESULTADOS)
-# ==========================================
+# Título principal da aplicação
+st.title("🎓 Gerador Inteligente de Conteúdo Educacional (RAG + Agentes)")
+st.markdown("""
+Transforme documentações técnicas densas, manuais ou artigos em **tutoriais, quizzes, flashcards ou resumos** 
+personalizados para diferentes perfis e indústrias, com validação anti-alucinação.
+""")
+
 if botao_gerar:
     if not arquivo_upload:
         st.warning(
             "⚠️ Por favor, faça o upload de um documento técnico na barra lateral antes de gerar."
         )
     else:
-        # Salva o arquivo temporariamente para o LangChain conseguir ler o caminho
         temp_dir = "./temp_data"
         os.makedirs(temp_dir, exist_ok=True)
         caminho_temp = os.path.join(temp_dir, arquivo_upload.name)
@@ -104,15 +129,12 @@ if botao_gerar:
             with st.status(
                 "🔄 Processando pipeline inteligente...", expanded=True
             ) as status:
-                # Passo A: Ingestão e Vetorização (RAG)
                 st.write("📄 Lendo documento e criando chunks...")
                 db_vetorial = criar_base_vetorial(
                     caminho_temp, persist_directory="./chroma_temp_db"
                 )
 
-                # Passo B: Recuperação de Contexto Relevante
                 st.write("🔍 Realizando busca semântica (Retrieval)...")
-                # Busca contextual baseada no formato escolhido para puxar os trechos mais úteis
                 query_busca = f"Conceitos principais, regras, códigos e instruções sobre {arquivo_upload.name}"
                 docs_encontrados = buscar_contexto(db_vetorial, query_busca, k=4)
 
@@ -120,7 +142,6 @@ if botao_gerar:
                     [doc.page_content for doc in docs_encontrados]
                 )
 
-                # Passo C: Geração com Agentes e Gemini
                 st.write(
                     "🤖 Executando Agente Redator e Agente Revisor (Anti-Alucinação)..."
                 )
@@ -137,16 +158,11 @@ if botao_gerar:
                     expanded=False,
                 )
 
-            # Limpa arquivo temporário
             if os.path.exists(caminho_temp):
                 os.remove(caminho_temp)
 
-            # ==========================================
-            # EXIBIÇÃO DOS RESULTADOS NA TELA
-            # ==========================================
             st.success("✨ Material Pedagógico Pronto!")
 
-            # Cards de Metadados
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric(
@@ -165,7 +181,6 @@ if botao_gerar:
 
             st.divider()
 
-            # Título e Informações Detalhadas
             st.subheader(f"📌 {resultado_json.get('titulo')}")
 
             with st.expander("🔍 Ver Conceitos-Chave e Pré-requisitos"):
@@ -180,13 +195,11 @@ if botao_gerar:
                     f"**Notas de Revisão:** _{resultado_json.get('observacoes_revisao')}_"
                 )
 
-            # Conteúdo Principal Renderizado em Markdown
             st.markdown("### 📖 Conteúdo Adaptado")
             st.markdown(resultado_json.get("conteudo_estruturado"))
 
             st.divider()
 
-            # Botão de Download do JSON Estruturado (Preparando para a Etapa OCI)
             json_string = json.dumps(resultado_json, indent=2, ensure_ascii=False)
             st.download_button(
                 label="📥 Baixar Pacote de Conteúdo (JSON)",
@@ -198,7 +211,6 @@ if botao_gerar:
         except Exception as e:
             st.error(f"❌ Ocorreu um erro durante o processamento: {str(e)}")
 else:
-    # Tela inicial de boas-vindas na área principal
     st.info(
         "👈 Envie um documento técnico na barra lateral esquerda e selecione os critérios pedagógicos para iniciar a geração."
     )
