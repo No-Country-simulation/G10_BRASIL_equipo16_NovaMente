@@ -1,5 +1,5 @@
 import os
-from typing import List, Literal, TypedDict
+from typing import List, TypedDict
 
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
@@ -56,12 +56,40 @@ class AgentState(TypedDict):
 
 
 # ==========================================
-# 3. INICIALIZAÇÃO DO MODELO GEMINI
+# 3. INICIALIZAÇÃO DOS MODELOS GEMINI (COM FALLBACK)
 # ==========================================
-# Usando gemini-2.5-flash por ser rápido, gratuito na camada free e excelente com JSON estruturado
-llm = ChatGoogleGenerativeAI(
+llm_principal = ChatGoogleGenerativeAI(
+    model="gemini-3.7-flash",
+    thinking_level="low",
+    timeout=300,
+    max_retries=1,
+)
+
+llm_contingencia_1 = ChatGoogleGenerativeAI(
+    model="gemini-3.6-flash",
+    thinking_level="low",
+    timeout=30,
+    max_retries=1,
+)
+
+llm_contingencia_2 = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
-    temperature=0.3,  # Temperatura baixa para reduzir criatividade excessiva e evitar alucinações
+    temperature=0.3,
+    timeout=30,
+    max_retries=1,
+)
+
+# LLM para geração de texto livre (Agente Redator) com fallback automático em caso de 503/429
+llm_texto = llm_principal.with_fallbacks([llm_contingencia_1, llm_contingencia_2])
+
+# LLM para saída JSON estrita (Agente Revisor) com fallback automático preservando o schema Pydantic
+llm_estruturado = llm_principal.with_structured_output(
+    ConteudoEducacional
+).with_fallbacks(
+    [
+        llm_contingencia_1.with_structured_output(ConteudoEducacional),
+        llm_contingencia_2.with_structured_output(ConteudoEducacional),
+    ]
 )
 
 
@@ -83,9 +111,9 @@ REGRAS ESTRITAS:
 1. Baseie-se EXCLUSIVAMENTE nos trechos da documentação fornecidos no contexto abaixo.
 2. NÃO invente funcionalidades, comandos, bibliotecas ou regras que não estejam no texto original.
 3. Adapte o vocabulário, a profundidade e os exemplos para:
-   - Perfil do Destinatário: {perfil}
-   - Formato Pedagógico: {formato}
-   - Nicho / Contexto de Aplicação: {nicho}
+- Perfil do Destinatário: {perfil}
+- Formato Pedagógico: {formato}
+- Nicho / Contexto de Aplicação: {nicho}
 4. Se o formato for 'Quiz Interativo', inclua perguntas, alternativas e justificativas detalhadas baseadas no texto.
 5. Se o formato for 'Flashcards', estruture pares claros de Pergunta/Conceito -> Resposta/Explicação.""",
             ),
@@ -100,7 +128,7 @@ Gere agora o conteúdo educacional completo e inclua sugestões de conceitos-cha
         ]
     )
 
-    chain = prompt_redator | llm
+    chain = prompt_redator | llm_texto
     resposta = chain.invoke(
         {
             "perfil": state["perfil"],
@@ -116,9 +144,6 @@ Gere agora o conteúdo educacional completo e inclua sugestões de conceitos-cha
 def agente_revisor_fidelidade(state: AgentState):
     """Audita o rascunho contra o contexto original e formata a saída final em JSON estruturado."""
     print("🕵️ [Agente Revisor] Validando fidelidade técnica e estruturando JSON...")
-
-    # Força o Gemini a responder rigorosamente no formato do Pydantic Schema
-    llm_estruturado = llm.with_structured_output(ConteudoEducacional)
 
     prompt_revisor = ChatPromptTemplate.from_messages(
         [

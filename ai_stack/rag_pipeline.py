@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from langchain_community.document_loaders import (
     PyPDFLoader,
@@ -8,6 +9,20 @@ from langchain_community.document_loaders import (
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# Cache global em memória para evitar recarregar o modelo a cada execução
+_EMBEDDINGS_MODEL: Optional[HuggingFaceEmbeddings] = None
+
+
+def obter_modelo_embeddings() -> HuggingFaceEmbeddings:
+    """Carrega o modelo do HuggingFace apenas na primeira chamada e mantém em cache na RAM."""
+    global _EMBEDDINGS_MODEL
+    if _EMBEDDINGS_MODEL is None:
+        print(
+            "🧠 Carregando modelo de embeddings local (all-MiniLM-L6-v2) na memória..."
+        )
+        _EMBEDDINGS_MODEL = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return _EMBEDDINGS_MODEL
 
 
 def carregar_documento(caminho_arquivo: str):
@@ -26,8 +41,8 @@ def carregar_documento(caminho_arquivo: str):
     return loader.load()
 
 
-def criar_base_vetorial(caminho_arquivo: str, persist_directory: str = "./chroma_db"):
-    """Faz a ingestão, chunking, vetorização e salva no ChromaDB."""
+def criar_base_vetorial(caminho_arquivo: str, persist_directory: Optional[str] = None):
+    """Faz a ingestão, chunking e vetorização (em memória por padrão ou em disco se informado)."""
     print(f"📄 Carregando o arquivo: {caminho_arquivo}...")
     documentos = carregar_documento(caminho_arquivo)
 
@@ -38,13 +53,16 @@ def criar_base_vetorial(caminho_arquivo: str, persist_directory: str = "./chroma
     chunks = text_splitter.split_documents(documentos)
     print(f"   -> Total de chunks gerados: {len(chunks)}")
 
-    print("🧠 Gerando embeddings e salvando no Vector Store (Chroma)...")
-    # Usando modelo gratuito local do HuggingFace para embeddings
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    embeddings = obter_modelo_embeddings()
 
-    vectorstore = Chroma.from_documents(
-        documents=chunks, embedding=embeddings, persist_directory=persist_directory
-    )
+    print("⚡ Indexando vetores no ChromaDB...")
+    if persist_directory:
+        vectorstore = Chroma.from_documents(
+            documents=chunks, embedding=embeddings, persist_directory=persist_directory
+        )
+    else:
+        # Execução em memória RAM (mais rápida e sem criar arquivos temporários em disco)
+        vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
 
     print("✅ Base vetorial criada com sucesso!")
     return vectorstore
@@ -59,13 +77,11 @@ def buscar_contexto(vectorstore, query: str, k: int = 3):
 
 # Exemplo de execução local para teste
 if __name__ == "__main__":
-    # Substitua pelo caminho de um arquivo de teste real (PDF, MD ou TXT)
     arquivo_exemplo = "exemplo_documento.pdf"
 
     if os.path.exists(arquivo_exemplo):
         db = criar_base_vetorial(arquivo_exemplo)
 
-        # Teste rápido de recuperação
         pergunta_teste = "Qual é o objetivo principal desta documentação?"
         docs_relevantes = buscar_contexto(db, pergunta_teste)
 

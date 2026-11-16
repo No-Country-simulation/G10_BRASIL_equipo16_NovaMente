@@ -4,60 +4,41 @@ import os
 import streamlit as st
 from agent_pipeline import gerar_material_educacional
 from dotenv import load_dotenv
-
-# Importa as funções dos módulos que criamos nas etapas anteriores
 from rag_pipeline import buscar_contexto, criar_base_vetorial
-from streamlit_google_auth import Authenticate
 
 # Carrega variáveis de ambiente (.env)
 load_dotenv()
 
 # Configuração da página do Streamlit
 st.set_page_config(
-    page_title="Gerador Inteligente de Conteúdo Técnico", page_icon="🎓", layout="wide"
+    page_title="Gerador Inteligente de Conteúdo Técnico",
+    page_icon="🎓",
+    layout="wide",
 )
 
 # ==========================================
-# CONFIGURAÇÃO DE AUTENTICAÇÃO GOOGLE
+# CONFIGURAÇÃO DE AUTENTICAÇÃO GOOGLE NATIVA
 # ==========================================
-authenticator = Authenticate(
-    secret_credentials_path={
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-        "redirect_uri": "http://localhost:8501",
-    },
-    cookie_name="rag_app_google_cookie",
-    cookie_key="chave_secreta_super_segura_para_cookies",
-    redirect_uri="http://localhost:8501",
-    scope=["openid", "email", "profile"],
-)
-
-# Verifica se o usuário está logado
-authenticator.check_authentication()
-
-# Se não estiver autenticado, exibe o botão de login
-if not st.session_state.get("connected", False):
-    st.title("🎓 Login - Gerador Inteligente de Conteúdo")
+if not st.user.is_logged_in:
+    st.title("🎓 Login - Gerador Inteligente de Conteúdo NovaMente G10 Equipe 16")
     st.markdown("Faça login com sua conta Google para acessar a plataforma RAG.")
+    if st.button("Entrar com Google", type="primary"):
+        st.login()
+    st.stop()
 
-    # Exibe o botão de login do Google
-    authenticator.login()
-    st.stop()  # Interrompe a execução do restante da página até que o login seja feito
+# Dados do usuário logado nativamente
+user_name = getattr(st.user, "name", "Convidado")
+user_email = getattr(st.user, "email", "Usuário")
 
 # ==========================================
-# APLICAÇÃO PRINCIPAL (PROTEGIDA POR LOGIN)
+# BARRA LATERAL (CONFIGURAÇÕES E PARÂMETROS)
 # ==========================================
-user_info = st.session_state.get("user_info", {})
-user_email = user_info.get("email", "Usuário")
-user_name = user_info.get("name", "Convidado")
-
-# Barra lateral com dados do usuário logado
 with st.sidebar:
     st.write(f"👤 Logado como: **{user_name}**")
     st.write(f"📧 `{user_email}`")
 
-    # Botão de Logout nativo do componente
-    authenticator.logout("Sair", "sidebar")
+    if st.button("Sair"):
+        st.logout()
     st.divider()
 
     st.header("⚙️ Configurações & Parâmetros")
@@ -97,7 +78,8 @@ with st.sidebar:
     )
 
     nicho = st.selectbox(
-        "Nicho / Contexto de Aplicação", ["Geral", "Fintech", "Saúde", "E-commerce"]
+        "Nicho / Contexto de Aplicação",
+        ["Geral", "Fintech", "Saúde", "E-commerce"],
     )
 
     st.divider()
@@ -105,12 +87,16 @@ with st.sidebar:
         "🚀 Gerar Conteúdo Educacional", type="primary", use_container_width=True
     )
 
-# Título principal da aplicação
+# ==========================================
+# ÁREA PRINCIPAL (EXECUÇÃO E RESULTADOS)
+# ==========================================
 st.title("🎓 Gerador Inteligente de Conteúdo Educacional (RAG + Agentes)")
-st.markdown("""
+st.markdown(
+    """
 Transforme documentações técnicas densas, manuais ou artigos em **tutoriais, quizzes, flashcards ou resumos** 
 personalizados para diferentes perfis e indústrias, com validação anti-alucinação.
-""")
+"""
+)
 
 if botao_gerar:
     if not arquivo_upload:
