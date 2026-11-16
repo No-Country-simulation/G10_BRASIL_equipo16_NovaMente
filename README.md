@@ -22,15 +22,26 @@ Outros formatos contemplados pelo produto, como tutoriais e resumos, fazem parte
 # Estrutura deste repo
 
 ```bash
+
+$ tree
 .
-├── ai_stack # raiz  da stack de AI incluindo dados de treinamento e modelos
-├── backend # raiz da stack de backend
-├── docs # raiz de toda a documentacao deste projeto
-│   └── enunciado
-│       └── Projeto1NovaMente.pdf
-├── frontend # raiz da stack de frontend
+├── docs
 ├── LICENSE
-└── README.md # este arquivo .
+├── out
+├── README.md
+└── src                         # raiz do app
+    ├── agent_pipeline.py
+    ├── app.py
+    ├── chroma_temp_db
+    ├── env_template
+    ├── exemplo_documento.pdf
+    ├── main.py
+    ├── pyproject.toml
+    ├── rag_pipeline.py
+    ├── README.md
+    ├── temp_data
+    └── uv.lock
+
 ```
 
 ---
@@ -45,6 +56,7 @@ Outros formatos contemplados pelo produto, como tutoriais e resumos, fazem parte
 
 ## Roteiro de Desenvolvimento Planejado
 ```
+
 [Etapa 1: Ingestão & RAG] ➔ [Etapa 2: Agentes & Prompts] ➔ [Etapa 3: Backend & Schema JSON]
                                                                       │
 [Etapa 5: OCI & Documentação] ◄───────── [Etapa 4: Interface UI] ◄────┘
@@ -53,7 +65,7 @@ Outros formatos contemplados pelo produto, como tutoriais e resumos, fazem parte
 
 ---
 
-### Antes de comecar:
+# Antes de comecar:
 Todos os contribuintes devem clonar este repositório e evitar de escrever direto na branch `main`, para cada contribuicao individual o desenvolvedor deve criar uma branch propria, ex:
 
 ```bash
@@ -63,21 +75,120 @@ git checkout -b "dev-$USER"
 ```
  Após ter feito mudancas o codigo dewve passar por um review coletivo para entao ser unido a branch `main`.
 
+# Instalar e executar o projeto localmente
+
+Este projeto utiliza a ferramenta ""[UV](https://docs.astral.sh/uv/)"" para gerenciar todas as suas dependencias e pacotes, certifique-se de ter o UV instalado antes de comecar.
+
+### Instalar o UV
+
+Documentacao oficial: "[Installing uv](https://docs.astral.sh/uv/getting-started/installation/)"
+
+#### Linux && macOs
+```bash
+
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+```
+
+#### windows
+Use `irm` to download the script and execute it with iex:
+
+```powershell
+
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+```
+
+### Instalar as dependencias
+
+A partir da raiz deste repositorio, navegue até o diretorio raiz do APP:
+
+```bash
+
+cd src
+
+```
+
+Utilize a ferramneta `uv` para instalar as dependencias:
+
+```bash
+
+uv sync
+
+```
+
+Execute o APP com o comando:
+
+```bash
+
+uv run streamlit run app.py
+
+```
+
+O app deve abrir automaticamente no seu navegador no endereco `http://localhost:8501/`
+
+# Configurar Chaves API e variaveis de ambiente
+
+Para executar o projeto localmente voce deverá fornecer as suas chaves de api pelas variaveis de ambiente, na raiz do app existe um arquivo `env_template` para ser usado como guia de configuracao.
+
+Crie um arquivo `.env` no diretório do APP em:
+
+```bash
+
+src/.env
+
+```
+
+este arquivo deve conter as seguintes chaves:
+
+```toml
+
+GOOGLE_CLIENT_ID="seu-client-id-aqui.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="seu-client-secret-aqui"
+GOOGLE_API_KEY="sua_chave_do_gemini_aqui"
+
+```
+
+#### Configure também as chaves do streamlit 
+
+Essas chaves sao necessarias para utilizar a api the autenticacao.
+
+Crie o arquivo em:
+
+```bash
+
+src/.streamlit/secrets.toml
+
+```
+
+o arquivo deve conter:
+
+```toml
+
+[auth]
+redirect_uri = "http://localhost:8501/oauth2callback"
+cookie_secret = "uma_chave_secreta_bem_longa_e_aleatoria_aqui"
+client_id = "sua_chave_google_aqui.googleusercontent.com"
+client_secret = "seu_google_secret_aqui"
+server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
+
+```
+
 ---
 
 ### 1. Etapa 1: Fundação do RAG (Ingestão e Busca Semântica)
 
-> **Objetivo:** Garantir que o sistema consiga ler arquivos técnicos e buscar informações relevantes sem erros.
+~~> **Objetivo:** Garantir que o sistema consiga ler arquivos técnicos e buscar informações relevantes sem erros.~~
 
-* [ ] **Configurar o ambiente Python:** Crie um ambiente virtual (`venv` ou `conda`) e instale bibliotecas base (`langchain`, `pypdf`, `chromadb` ou `faiss-cpu`, `sentence-transformers`).
-* [ ] **Leitura de documentos:** Crie um script/módulo simples para ler arquivos `.pdf`, `.md` e `.txt` usando `PyPDF` ou carregadores nativos do LangChain.
-* [ ] **Chunking & Embeddings:**
+* [✔] **Configurar o ambiente Python:** Crie um ambiente virtual (`venv` ou `conda`) e instale bibliotecas base (`langchain`, `pypdf`, `chromadb` ou `faiss-cpu`, `sentence-transformers`).
+* [✔] **Leitura de documentos:** Crie um script/módulo simples para ler arquivos `.pdf`, `.md` e `.txt` usando `PyPDF` ou carregadores nativos do LangChain.
+* [✔] **Chunking & Embeddings:**
 * Divida o texto em pedaços com `RecursiveCharacterTextSplitter` (ex: tamanho de chunk ~1000 com overlap de ~200).
-* Escolha um modelo de embeddings (ex: OpenAI `text-embedding-3-small` ou HuggingFace `all-MiniLM-L6-v2` gratuito/local).
+* Escolha um modelo de embeddings (ex: OpenAI `text-embedding-3-small` ou HuggingFace `all-MiniLM-L6-v2` gratuito/local).~~
 
 
-* [ ] **Vector Store:** Guarde os vetores em um banco de vetores local como **ChromaDB** ou **FAISS**.
-* [ ] **Validação inicial:** Teste uma pergunta sobre o documento e verifique se os trechos recuperados (*retrieval*) são exatos e relevantes.
+* [✔] **Vector Store:** Guarde os vetores em um banco de vetores local como **ChromaDB** ou **FAISS**.
+* [✔] **Validação inicial:** Teste uma pergunta sobre o documento e verifique se os trechos recuperados (*retrieval*) são exatos e relevantes.
 
 ---
 
@@ -85,19 +196,19 @@ git checkout -b "dev-$USER"
 
 > **Objetivo:** Desenvolver o fluxo de inteligência adaptativa (perfil, nicho, formato pedagógico e prevenção de alucinações).
 
-* [ ] **Configurar conexão com LLM:** Escolha a API base (Google Gemini, OpenAI GPT-4o, Claude ou Ollama local).
-* [ ] **Engenharia de Prompts:** Crie templates dinâmicos (*Role Prompting*) que recebam:
+* [✔] **Configurar conexão com LLM:** Escolha a API base (Google Gemini, OpenAI GPT-4o, Claude ou Ollama local).
+* [✔] **Engenharia de Prompts:** Crie templates dinâmicos (*Role Prompting*) que recebam:
 * `Perfil`: ex.: *Líder Técnico* vs. *Iniciante*.
 * `Nicho`: ex.: *Fintech*, *Saúde*.
 * `Formato`: ex.: *Quiz*, *Flashcards*, *Tutorial*.
 
 
-* [ ] **Cadeia de Geração e Revisão (LangChain / LangGraph):**
+* [✔] **Cadeia de Geração e Revisão (LangChain / LangGraph):**
 * **Agente 1 (Redator):** Lê o contexto RAG e gera o conteúdo pedagógico.
 * **Agente 2 (Revisor/Validador):** Verifica se o conteúdo gerado é fiel ao texto original e se condiz com o perfil solicitado.
 
 
-* [ ] **Extração de Metadados:** Peça para a LLM gerar também pré-requisitos, tempo estimado de estudo e termos-chave.
+* [✔] **Extração de Metadados:** Peça para a LLM gerar também pré-requisitos, tempo estimado de estudo e termos-chave.
 
 ---
 
@@ -105,7 +216,7 @@ git checkout -b "dev-$USER"
 
 > **Objetivo:** Garantir que o resultado final seja previsível e padronizado para integração.
 
-* [ ] **Definir o Schema com Pydantic:**
+* [✔] **Definir o Schema com Pydantic:**
 Crie um modelo estrito de dados em Python:
 ```python
 from pydantic import BaseModel
@@ -122,7 +233,7 @@ class ConteudoEducacional(BaseModel):
 ```
 
 
-* [ ] **Saída Estruturada:** Utilize recursos como `Structured Output` (do LangChain/LLMs) ou `PydanticOutputParser` para garantir que a LLM sempre devolva um JSON válido.
+* [✔] **Saída Estruturada:** Utilize recursos como `Structured Output` (do LangChain/LLMs) ou `PydanticOutputParser` para garantir que a LLM sempre devolva um JSON válido.
 
 ---
 
@@ -130,13 +241,13 @@ class ConteudoEducacional(BaseModel):
 
 > **Objetivo:** Dar vida à aplicação com um painel interativo simples e funcional.
 
-* [ ] **Criar a UI base (ex.: Streamlit):**
+* [✔] **Criar a UI base (ex.: Streamlit):**
 * **Sidebar:** Upload do arquivo (`.pdf`, `.md`, `.txt`) e formulário com os menus suspensos (*dropdowns*) para Perfil, Nicho e Formato.
 * **Área Principal:** Botão *"Gerar Conteúdo"*, indicador de carregamento (*spinner*) e exibição do resultado formatado.
 
 
-* [ ] **Conectar UI ao Backend:** Integre a interface diretamente com o pipeline construído nas etapas 1 a 3.
-* [ ] **Tratamento de Exceções:** Adicione alertas amigáveis caso o arquivo esteja corrompido, a API falhe ou a LLM devolva algo fora do esperado.
+* [✔] **Conectar UI ao Backend:** Integre a interface diretamente com o pipeline construído nas etapas 1 a 3.
+* [✔] **Tratamento de Exceções:** Adicione alertas amigáveis caso o arquivo esteja corrompido, a API falhe ou a LLM devolva algo fora do esperado.
 
 ---
 
