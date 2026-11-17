@@ -59,23 +59,23 @@ class AgentState(TypedDict):
 # 3. INICIALIZAÇÃO DOS MODELOS GEMINI (COM FALLBACK)
 # ==========================================
 llm_principal = ChatGoogleGenerativeAI(
-    model="gemini-3.7-flash",
+    model="gemini-3.8-flash",
     thinking_level="low",
-    timeout=300,
+    timeout=180,
     max_retries=1,
 )
 
 llm_contingencia_1 = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model="gemini-3.7-flash",
     thinking_level="low",
-    timeout=30,
+    timeout=180,
     max_retries=1,
 )
 
 llm_contingencia_2 = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-3.6-flash",
     temperature=0.3,
-    timeout=30,
+    timeout=180,
     max_retries=1,
 )
 
