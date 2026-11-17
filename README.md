@@ -1,3 +1,16 @@
+![https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=Oracle&logoColor=white](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=Oracle&logoColor=white)
+![https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white](https://img.shields.io/badge/Google%20Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)
+![https://img.shields.io/badge/-HuggingFace-FDEE21?style=for-the-badge&logo=HuggingFace&logoColor=black](https://img.shields.io/badge/-HuggingFace-FDEE21?style=for-the-badge&logo=HuggingFace&logoColor=black)
+![https://img.shields.io/badge/langchain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white](https://img.shields.io/badge/langchain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)
+![https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
+![https://img.shields.io/badge/GPL--3.0-red?style=for-the-badge](https://img.shields.io/badge/GPL--3.0-red?style=for-the-badge)
+![https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white](https://img.shields.io/badge/Debian-A81D33?style=for-the-badge&logo=debian&logoColor=white)
+![https://img.shields.io/badge/GIT-E44C30?style=for-the-badge&logo=git&logoColor=white](https://img.shields.io/badge/GIT-E44C30?style=for-the-badge&logo=git&logoColor=white)
+![https://img.shields.io/badge/GNU%20Bash-4EAA25?style=for-the-badge&logo=GNU%20Bash&logoColor=white](https://img.shields.io/badge/GNU%20Bash-4EAA25?style=for-the-badge&logo=GNU%20Bash&logoColor=white)
+![https://img.shields.io/badge/tmux-1BB91F?style=for-the-badge&logo=tmux&logoColor=white](https://img.shields.io/badge/tmux-1BB91F?style=for-the-badge&logo=tmux&logoColor=white)
+
+
+
 # G10_BRASIL_equipo16_NovaMente
 Sistema Inteligente de Adaptação e Geração de Conteúdo Educacional.
 
@@ -19,7 +32,7 @@ O escopo funcional das features extras concentra-se em dois formatos educacionai
 
 Outros formatos contemplados pelo produto, como tutoriais e resumos, fazem parte de iterações posteriores.
 
-# Estrutura deste repo
+# Estrutura deste repositorio
 
 ```bash
 
@@ -73,7 +86,7 @@ Todos os contribuintes devem clonar este repositório e evitar de escrever diret
 git checkout -b "dev-$USER"
 
 ```
- Após ter feito mudancas o codigo dewve passar por um review coletivo para entao ser unido a branch `main`.
+ Após ter feito mudancas o codigo deve passar por um review coletivo para entao ser unido a branch `main`.
 
 # Instalar e executar o projeto localmente
 
